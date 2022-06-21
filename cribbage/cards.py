@@ -21,6 +21,12 @@ class Deck:
         # key is the index position in the deck, value is the Card instance
         self._cards[key] = value
 
+    def draw_hand(self, size):
+        hand = self._cards[:size]
+        del self._cards[:size]
+        # TODO should handle case when deck is empty - won't (ever?) happen in cribbage so I won't worry about it now (or maybe calling code should handle?)
+        return hand
+
 
 class Hand:
     def __init__(self, cards):
@@ -34,16 +40,24 @@ class Hand:
 
     @staticmethod
     def from_specs(specs):
-        # cards = []
-        # for spec in specs:
-        #     cards.append(Card.from_spec(spec))
-
         return Hand([Card.from_spec(spec) for spec in specs])
 
 class Card:
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
+
+    def __repr__(self):
+        return f'{self.rank}{self.suit}'
+
+    def __str__(self):
+        suit_char_to_symbol = {
+            'S': '\u2660',
+            'H': '\u2665',
+            'D': '\u2666',
+            'C': '\u2663'
+        }
+        return f'{self.rank}{suit_char_to_symbol[self.suit]}'
 
     @staticmethod
     def from_spec(spec):
