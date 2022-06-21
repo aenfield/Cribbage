@@ -28,6 +28,16 @@ class Deck:
         self._cards[key] = value
 
 
+class Hand:
+    def __init__(self, cards):
+        self._cards = cards
+
+    def __len__(self):
+        return len(self._cards)
+
+    def __getitem__(self, position):
+        return self._cards[position]
+
 
 # if __name__ == '__main__':
 #     foo = Card('7', 'spades')
