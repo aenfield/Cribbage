@@ -56,6 +56,22 @@ class TestHand:
         assert sut_h2[0].rank == '7'
         assert sut_h2[0].suit == 'S'
 
+    def test_hand_worth_zero_scores_zero(self):
+        sut_nothing = cards.Hand.from_specs(['2S', '4C', '6D', '8H', 'KH'])
+        assert sut_nothing.score() == 0
+
+    # Note that below so far I'm testing the internal score routines, like _score_15, indirectly via score, by defining hands
+    # that _only_ give scores from the specified internal score routine - maybe I should just test the score routines directly 
+
+    def test_hand_scores_single_15_with_two_cards(self):
+        sut_15 = cards.Hand.from_specs(['7H', '8S'])
+        assert sut_15.score() == 2
+
+    def test_hand_scores_single_15_with_three_cards(self):
+        sut_15 = cards.Hand.from_specs(['2S', '4D', '9C'])
+        assert sut_15.score() == 2
+
+
 
     # TODO can score hand - size four, with cut card (perhaps provide handy method to add card, or just manually combine?)
     # TODO for scoring, support 15s, runs, flushes, pairs, nobs
@@ -82,3 +98,15 @@ class TestCard:
         assert str(sut_hand[1]) == '2\u2665'
         assert str(sut_hand[2]) == '3\u2666'
         assert str(sut_hand[3]) == 'K\u2663'
+
+    def test_card_value_is_rank_for_numeric_cards(self):
+        assert cards.Card.from_spec('2D').value == 2
+        assert cards.Card.from_spec('4H').value == 4
+        assert cards.Card.from_spec('9S').value == 9
+
+    def test_card_value_is_one_or_ten_for_nonnumeric_cards(self):
+        assert cards.Card.from_spec('AS').value == 1
+        assert cards.Card.from_spec('TD').value == 10
+        assert cards.Card.from_spec('JC').value == 10
+        assert cards.Card.from_spec('QH').value == 10
+        assert cards.Card.from_spec('KS').value == 10

@@ -42,6 +42,17 @@ class Hand:
     def from_specs(specs):
         return Hand([Card.from_spec(spec) for spec in specs])
 
+    def score(self):
+        points = 0
+        
+        points += self._score_15()
+
+        return points
+
+    def _score_15(self):
+        total = sum([card.value for card in self._cards])
+        return 2 if total == 15 else 0
+
 class Card:
     def __init__(self, rank, suit):
         self.rank = rank
@@ -64,3 +75,13 @@ class Card:
         # 'spec' is a two character string where the rank is the first char and suit the second (S, H, D, or C)
         return Card(spec[0], spec[1])
 
+    @property
+    def value(self):
+        if self.rank == 'A':
+            return 1
+        elif self.rank in list('TJQK'):
+            return 10
+        elif int(self.rank) >= 2 and int(self.rank) <= 9:
+            return int(self.rank)
+        else:
+            raise ValueError(f"Invalid rank: '{self.rank}'")
