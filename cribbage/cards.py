@@ -1,3 +1,4 @@
+from calendar import c
 import collections
 
 # I based some of the cards impl off of ideas and code in the O'Reilly "Fluent Python" book.
@@ -42,16 +43,42 @@ class Hand:
     def from_specs(specs):
         return Hand([Card.from_spec(spec) for spec in specs])
 
-    def score(self):
+    def score(self, cut_card=None):
+        cards = self._cards
+        cards_with_cut = Hand._add_to_list_if_not_none(self._cards, cut_card)
+
         points = 0
         
-        points += self._score_15()
+        points += Hand._score_15(cards_with_cut)
+        # points += Hand._score_flush(cards, cut_card)
 
         return points
 
-    def _score_15(self):
-        total = sum([card.value for card in self._cards])
+    @staticmethod
+    def _score_15(cards_with_cut):
+        total = sum([card.value for card in cards_with_cut])
         return 2 if total == 15 else 0
+
+    # @staticmethod
+    # def _score_flush(cards, cut_card=None):
+    #     # if cut_card is provided, it must match too (i.e., for pegging)
+    #     all_cards = Hand._add_to_list_if_not_none(cards, cut_card)
+
+    #     if not len(cards) == 4:
+    #         return 0
+    #     else:
+    #         return all([ for card in cards])
+
+    @staticmethod
+    def _add_to_list_if_not_none(seq, new_item):
+        # looks like Python doesn't provide this generally and the shortest would still be something like:
+        # return seq if new_item is None else seq + [new_item]
+        if new_item:
+            return seq + [new_item]
+        else:
+            return seq
+
+
 
 class Card:
     def __init__(self, rank, suit):
@@ -69,6 +96,11 @@ class Card:
             'C': '\u2663'
         }
         return f'{self.rank}{suit_char_to_symbol[self.suit]}'
+
+    # __add__ should return the same type - i.e., a Card - which doesn't make sense because you can't have cards
+    # with ranks of, say, 18 - instead of doing it this way, I'll just manually sum values when I need to 
+    # def __add__(self, other):
+    #     return self.value + other.value
 
     @staticmethod
     def from_spec(spec):

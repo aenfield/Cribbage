@@ -1,6 +1,8 @@
 import cards
 
 import random # for shuffle
+# These are pytest tests - no imports are needed, so noting this here in case I'd otherwise forget :-)
+
 
 class TestDeck:
     def test_deck_has_52_cards(self):
@@ -71,10 +73,24 @@ class TestHand:
         sut_15 = cards.Hand.from_specs(['2S', '4D', '9C'])
         assert sut_15.score() == 2
 
+    def test_hand_scores_single_15_with_cut_card(self):
+        sut_15 = cards.Hand.from_specs(['7H'])
+        assert sut_15.score(cards.Card.from_spec('8D')) == 2
+
+    # def test_hand_scores_flush(self):
+    #     sut_flush = cards.Hand.from_specs(['AS', '2S', '6S', 'KS'])
+    #     assert sut_flush.score(cards.Card.from_spec('AD')) == 2
+
+    # def test_hand_scores_flush_with_cut_card_matching(self):
+    #   pass
+
+    # def test_hand_doesnt_score_flush_with_cut_card_not_matching(self):
+    #   pass
 
 
-    # TODO can score hand - size four, with cut card (perhaps provide handy method to add card, or just manually combine?)
+    # TODO can score hand - size four, with cut card 
     # TODO for scoring, support 15s, runs, flushes, pairs, nobs
+    # TODO note that flushes require the four non-cut cards to be the same suit, so scoring does require knowing what it is
 
 
 class TestCard:
