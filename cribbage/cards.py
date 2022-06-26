@@ -43,14 +43,15 @@ class Hand:
     def from_specs(specs):
         return Hand([Card.from_spec(spec) for spec in specs])
 
-    def score(self, cut_card=None):
-        cards = self._cards
+    def score(self, cut_card=None, crib=False):
+        cards_hand_only = self._cards
         cards_with_cut = Hand._add_to_list_if_not_none(self._cards, cut_card)
 
         points = 0
         
         points += Hand._score_15(cards_with_cut)
-        # points += Hand._score_flush(cards, cut_card)
+
+        points += Hand._score_flush(cards_hand_only, cut_card, crib)
 
         return points
 
@@ -59,15 +60,28 @@ class Hand:
         total = sum([card.value for card in cards_with_cut])
         return 2 if total == 15 else 0
 
-    # @staticmethod
-    # def _score_flush(cards, cut_card=None):
-    #     # if cut_card is provided, it must match too (i.e., for pegging)
-    #     all_cards = Hand._add_to_list_if_not_none(cards, cut_card)
+    @staticmethod
+    def _score_flush(cards_hand_only, cut_card=None, crib=False):
+        # rule: for hands, 4 or 5 of the same suit score, for crib all five have to have the same suit (right?)
 
-    #     if not len(cards) == 4:
-    #         return 0
-    #     else:
-    #         return all([ for card in cards])
+        if len(cards_hand_only) < 4:
+            return 0
+
+        is_hand_a_flush = all([cards_hand_only[0].suit == card.suit for card in cards_hand_only[1:]])
+        cut_card_matches_suit = cut_card and cards_hand_only[0].suit == cut_card.suit # match against first hand card (before the and to ret false when cut card isn't provided)
+        if is_hand_a_flush:
+            if not crib: # four hand cards w/ same suit score 4, if the cut card is also the same suit score 5
+                if cut_card_matches_suit:
+                    return 5
+                else:
+                    return 4
+            else: # crib, so all five cards must have the same suit, which scores 5
+                if cut_card_matches_suit:
+                    return 5
+                else:
+                    return 0
+        else:
+            return 0
 
     @staticmethod
     def _add_to_list_if_not_none(seq, new_item):
