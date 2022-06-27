@@ -58,13 +58,24 @@ class TestHand:
         assert sut_h2[0].rank == '7'
         assert sut_h2[0].suit == 'S'
 
-    def test_hand_worth_zero_scores_zero(self):
-        sut_nothing = cards.Hand.from_specs(['2S', '4C', '6D', '8H', 'KH'])
-        assert sut_nothing.score() == 0
+    def test_hand_exposes_card_combinations(self):
+        sut_hand = cards.Hand.from_specs(['2S', '4C', '6D', '8H'])
+        assert len(sut_hand.combinations()) == 15
+
+    def test_hand_exposes_card_combinations_with_cut_card(self):
+        sut_hand = cards.Hand.from_specs(['2S', '4C', '6D', '8H'])
+        assert len(sut_hand.combinations(cards.Card.from_spec('KH'))) == 31
+
+    # TODO need to test that score uses combinations - do it separately? Or just assume usage in existing tests below?
 
     # Note that below so far I'm testing the internal score routines, like _score_15, indirectly via score, by defining hands
     # that _only_ give scores from the specified internal score routine - maybe I should just test the score routines directly 
 
+    def test_hand_worth_zero_scores_zero(self):
+        sut_nothing = cards.Hand.from_specs(['2S', '4C', '6D', '8H', 'KH'])
+        assert sut_nothing.score() == 0
+
+    # 15
     def test_hand_scores_single_15_with_two_cards(self):
         sut_15 = cards.Hand.from_specs(['7H', '8S'])
         assert sut_15.score() == 2
@@ -77,6 +88,7 @@ class TestHand:
         sut_15 = cards.Hand.from_specs(['7H'])
         assert sut_15.score(cards.Card.from_spec('8D')) == 2
 
+    # flush
     def test_hand_scores_flush_without_matching_cut_card(self):
         sut_flush = cards.Hand.from_specs(['AS', '2S', '6S', 'KS'])
         assert sut_flush.score(cards.Card.from_spec('QD')) == 4
@@ -93,6 +105,20 @@ class TestHand:
         sut_flush = cards.Hand.from_specs(['AS', '2S', '6S', 'KS'])
         assert sut_flush.score(cards.Card.from_spec('QS'), crib=True) == 5
 
+    # pairs
+    def test_hand_scores_pair_using_two_cards(self):
+        sut_pair = cards.Hand.from_specs(['5H','5D'])
+        assert sut_pair.score() == 2
+
+    def test_hand_scores_pair_using_one_card_and_cut_card(self):
+        sut_pair = cards.Hand.from_specs(['5H'])
+        assert sut_pair.score(cards.Card.from_spec('5S')) == 2
+
+    def test_hand_doesnt_score_pair_with_three_cards(self):
+        # rely on score calling with all combinations so it also is called w/ the 
+        # two-card combos and we get the pair there
+        sut_pair = cards.Hand.from_specs(['5H','5D','3C'])
+        assert sut_pair.score() == 0
 
 
 

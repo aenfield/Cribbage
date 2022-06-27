@@ -1,5 +1,5 @@
 from calendar import c
-import collections
+import itertools
 
 # I based some of the cards impl off of ideas and code in the O'Reilly "Fluent Python" book.
 
@@ -50,15 +50,31 @@ class Hand:
         points = 0
         
         points += Hand._score_15(cards_with_cut)
+        points += Hand._score_pair(cards_with_cut)
 
         points += Hand._score_flush(cards_hand_only, cut_card, crib)
 
         return points
 
+    def combinations(self, cut_card=None):
+        cards = Hand._add_to_list_if_not_none(self._cards, cut_card)
+        combinations_not_flattened = []
+        for i in range(len(cards)):
+            combinations_not_flattened.append(itertools.combinations(cards, i))
+
+        return list(itertools.chain(*combinations_not_flattened)) # go ahead and convert to list now, so at least len works w/o further code
+
     @staticmethod
     def _score_15(cards_with_cut):
         total = sum([card.value for card in cards_with_cut])
         return 2 if total == 15 else 0
+
+    @staticmethod
+    def _score_pair(cards_with_cut):
+        if len(cards_with_cut) == 2 and cards_with_cut[0].rank == cards_with_cut[1].rank:
+                return 2
+        else:
+            return 0
 
     @staticmethod
     def _score_flush(cards_hand_only, cut_card=None, crib=False):
