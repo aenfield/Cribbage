@@ -73,10 +73,11 @@ class TestHand:
         assert sut_hand_combos[1][0] == cards.Card.from_spec('8D')
         assert sut_hand_combos[2] == (cards.Card.from_spec('7H'), cards.Card.from_spec('8D'))
 
-    # TODO combinations are returning empty as the first, which we don't want, and at least from_specs(['7H', '8S'])
-    # is giving only 7H and 8S separate (in addition to the empty set), and not 7H and 8S combined 
-
-    # TODO need to test that score uses combinations - do it separately? Or just assume usage in existing tests below?
+    # TODO should update indiv score routines to just use Hand members to simplify call, and because each indiv detail 
+    # routine should worry about whether it wants combinations and if so how (for ex, i think runs will need the full hand
+    # and the combinations)
+    # TODO when things are working, may want to set combinations when _cards is set, and retrieve the already calculated 
+    # sequence from then on out (figuring out combos seems like it's many cycles, but may not matter) 
 
     # Note that below so far I'm testing the internal score routines, like _score_15, indirectly via score, by defining hands
     # that _only_ give scores from the specified internal score routine - maybe I should just test the score routines directly 
@@ -173,3 +174,23 @@ class TestCard:
 
     def test_can_compare_cards(self):
         assert cards.Card.from_spec('7H') == cards.Card.from_spec('7H')
+
+    def test_can_sort_cards_with_numeric_ranks(self):
+        sut_sort = sorted(cards.Hand.from_specs(['7S', '2S']))
+        assert sut_sort[0] == cards.Card.from_spec('2S')
+        assert sut_sort[1] == cards.Card.from_spec('7S')
+
+    def test_can_sort_cards_with_alpha_and_numberic_ranks(self):
+        sut_sort = sorted(cards.Hand.from_specs(['KS','AS','JS','7S','0S','2S']))
+        assert sut_sort[0] == cards.Card.from_spec('AS')
+        assert sut_sort[1] == cards.Card.from_spec('2S')
+        assert sut_sort[2] == cards.Card.from_spec('7S')
+        assert sut_sort[3] == cards.Card.from_spec('0S')
+        assert sut_sort[4] == cards.Card.from_spec('JS')
+        assert sut_sort[5] == cards.Card.from_spec('KS')
+
+    def test_can_sort_cards_with_different_suits(self):
+        sut_sort = sorted(cards.Hand.from_specs(['7S', '2C', '2S']))
+        assert sut_sort[0] == cards.Card.from_spec('2S')
+        assert sut_sort[1] == cards.Card.from_spec('2C')
+        assert sut_sort[2] == cards.Card.from_spec('7S')

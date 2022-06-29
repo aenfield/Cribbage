@@ -2,14 +2,15 @@ from calendar import c
 import itertools
 
 # I based some of the cards impl off of ideas and code in the O'Reilly "Fluent Python" book.
+RANKS = list('A234567890JQK')
+SUITS = list('SHDC')
+
 
 class Deck:
-    ranks = list('A') + [str(n) for n in range(2, 11)] + list('JQK')
-    suits = list('SHDC')
 
     def __init__(self):
-        self._cards = [Card(rank, suit) for suit in self.suits
-                                        for rank in self.ranks]
+        self._cards = [Card(rank, suit) for suit in SUITS
+                                        for rank in RANKS]
 
     def __len__(self):
         return len(self._cards)
@@ -119,12 +120,16 @@ class Hand:
 
 
 class Card:
+
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
 
     def __eq__(self, other):
         return (self.rank, self.suit) == (other.rank, other.suit)
+
+    def __lt__(self, other):
+        return (RANKS.index(self.rank), SUITS.index(self.suit)) < (RANKS.index(other.rank), SUITS.index(other.suit))  
 
     def __repr__(self):
         return f'{self.rank}{self.suit}'
