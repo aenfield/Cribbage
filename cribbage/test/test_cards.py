@@ -66,6 +66,16 @@ class TestHand:
         sut_hand = cards.Hand.from_specs(['2S', '4C', '6D', '8H'])
         assert len(sut_hand.combinations(cards.Card.from_spec('KH'))) == 31
 
+    def test_hand_combinations_dont_include_empty_and_do_include_both(self):
+        sut_hand_combos = cards.Hand.from_specs(['7H','8D']).combinations()
+        assert len(sut_hand_combos) == 3
+        assert sut_hand_combos[0][0] == cards.Card.from_spec('7H')
+        assert sut_hand_combos[1][0] == cards.Card.from_spec('8D')
+        assert sut_hand_combos[2] == (cards.Card.from_spec('7H'), cards.Card.from_spec('8D'))
+
+    # TODO combinations are returning empty as the first, which we don't want, and at least from_specs(['7H', '8S'])
+    # is giving only 7H and 8S separate (in addition to the empty set), and not 7H and 8S combined 
+
     # TODO need to test that score uses combinations - do it separately? Or just assume usage in existing tests below?
 
     # Note that below so far I'm testing the internal score routines, like _score_15, indirectly via score, by defining hands
@@ -114,11 +124,11 @@ class TestHand:
         sut_pair = cards.Hand.from_specs(['5H'])
         assert sut_pair.score(cards.Card.from_spec('5S')) == 2
 
-    def test_hand_doesnt_score_pair_with_three_cards(self):
+    def test_hand_scores_pair_with_three_cards(self):
         # rely on score calling with all combinations so it also is called w/ the 
         # two-card combos and we get the pair there
         sut_pair = cards.Hand.from_specs(['5H','5D','3C'])
-        assert sut_pair.score() == 0
+        assert sut_pair.score() == 2
 
 
 
@@ -160,3 +170,6 @@ class TestCard:
         assert cards.Card.from_spec('JC').value == 10
         assert cards.Card.from_spec('QH').value == 10
         assert cards.Card.from_spec('KS').value == 10
+
+    def test_can_compare_cards(self):
+        assert cards.Card.from_spec('7H') == cards.Card.from_spec('7H')

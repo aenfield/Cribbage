@@ -44,25 +44,33 @@ class Hand:
         return Hand([Card.from_spec(spec) for spec in specs])
 
     def score(self, cut_card=None, crib=False):
-        cards_hand_only = self._cards
-        cards_with_cut = Hand._add_to_list_if_not_none(self._cards, cut_card)
+        #cards_hand_only = self._cards
+        #cards_with_cut = Hand._add_to_list_if_not_none(self._cards, cut_card)
 
         points = 0
         
-        points += Hand._score_15(cards_with_cut)
-        points += Hand._score_pair(cards_with_cut)
+        # points += Hand._score_15(self.combinations(cut_card))
+        # points += Hand._score_pair(self.combinations(cut_card))
+        points += Hand._score_with_combinations(Hand._score_15, self.combinations(cut_card))
+        points += Hand._score_with_combinations(Hand._score_pair, self.combinations(cut_card))
 
-        points += Hand._score_flush(cards_hand_only, cut_card, crib)
+        points += Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations())
 
         return points
 
     def combinations(self, cut_card=None):
+        """Return a list of tuples, one for each combination of the four (or five, with cut) cards."""
         cards = Hand._add_to_list_if_not_none(self._cards, cut_card)
         combinations_not_flattened = []
-        for i in range(len(cards)):
+        for i in range(1, len(cards) + 1): # we want combinations with 1 to n cards
             combinations_not_flattened.append(itertools.combinations(cards, i))
 
         return list(itertools.chain(*combinations_not_flattened)) # go ahead and convert to list now, so at least len works w/o further code
+
+    @staticmethod
+    def _score_with_combinations(score_func, combinations):
+        points_for_all_combinations = [score_func(cards) for cards in combinations]
+        return sum(points_for_all_combinations)
 
     @staticmethod
     def _score_15(cards_with_cut):
@@ -114,6 +122,9 @@ class Card:
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
+
+    def __eq__(self, other):
+        return (self.rank, self.suit) == (other.rank, other.suit)
 
     def __repr__(self):
         return f'{self.rank}{self.suit}'
