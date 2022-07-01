@@ -131,10 +131,40 @@ class TestHand:
         sut_pair = cards.Hand.from_specs(['5H','5D','3C'])
         assert sut_pair.score() == 2
 
+    # straight
+    def test_hand_scores_straight_of_size_three(self):
+        sut_straight = cards.Hand.from_specs(['AD','2S','3H'])
+        assert sut_straight.score() == 3
+
+    # TODO straight w/ cut card
+    # TODO straight w/ cards not ordered (where to best order consistently?)
+    # TODO straight of four and five
+    # TODO multiple straights because of duplicated card
+
+    def test_length_of_longest_straight_simple_three(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AD','2S','3H'])) == 3
+
+    def test_length_of_longest_straight_four_cards_to_three(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AH','AD','2S','3H'])) == 3
+
+    def test_length_of_longest_straight_three_toward_end(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['9D','TS','JH'])) == 3
+
+    def test_length_of_longest_straight_three_with_two_in_middle(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AD','2S','2H','3H'])) == 3
+
+    def test_length_of_longest_straight_no_straight(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AD','3S','5H'])) == 1
+
+    def test_length_of_longest_straight_straight_of_four(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['3H','7D','8S','9H','TD'])) == 4
+
+    def test_length_of_longest_straight_straights_of_two_and_three(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['3H','4D','8S','9H','TD'])) == 3
 
 
     # TODO can score hand - size four, with cut card 
-    # TODO for scoring, support 15s, runs, flushes, pairs, nobs
+    # TODO for scoring, support nobs
     # TODO note that flushes require the four non-cut cards to be the same suit, so scoring does require knowing what it is
 
 
@@ -181,11 +211,11 @@ class TestCard:
         assert sut_sort[1] == cards.Card.from_spec('7S')
 
     def test_can_sort_cards_with_alpha_and_numberic_ranks(self):
-        sut_sort = sorted(cards.Hand.from_specs(['KS','AS','JS','7S','0S','2S']))
+        sut_sort = sorted(cards.Hand.from_specs(['KS','AS','JS','7S','TS','2S']))
         assert sut_sort[0] == cards.Card.from_spec('AS')
         assert sut_sort[1] == cards.Card.from_spec('2S')
         assert sut_sort[2] == cards.Card.from_spec('7S')
-        assert sut_sort[3] == cards.Card.from_spec('0S')
+        assert sut_sort[3] == cards.Card.from_spec('TS')
         assert sut_sort[4] == cards.Card.from_spec('JS')
         assert sut_sort[5] == cards.Card.from_spec('KS')
 
@@ -194,3 +224,17 @@ class TestCard:
         assert sut_sort[0] == cards.Card.from_spec('2S')
         assert sut_sort[1] == cards.Card.from_spec('2C')
         assert sut_sort[2] == cards.Card.from_spec('7S')
+
+    def test_card_has_rank_index(self):
+        assert cards.Card.from_spec('AS').rank_index == 0
+        assert cards.Card.from_spec('5S').rank_index == 4
+        assert cards.Card.from_spec('TD').rank_index == 9
+        assert cards.Card.from_spec('JC').rank_index == 10
+        assert cards.Card.from_spec('QH').rank_index == 11
+        assert cards.Card.from_spec('KS').rank_index == 12
+
+    def test_card_has_suit_index(self):
+        assert cards.Card.from_spec('AS').suit_index == 0
+        assert cards.Card.from_spec('QH').suit_index == 1
+        assert cards.Card.from_spec('TD').suit_index == 2
+        assert cards.Card.from_spec('JC').suit_index == 3

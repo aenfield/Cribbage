@@ -2,7 +2,7 @@ from calendar import c
 import itertools
 
 # I based some of the cards impl off of ideas and code in the O'Reilly "Fluent Python" book.
-RANKS = list('A234567890JQK')
+RANKS = list('A23456789TJQK')
 SUITS = list('SHDC')
 
 
@@ -57,6 +57,8 @@ class Hand:
 
         points += Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations())
 
+        points += Hand._score_straight(self._cards, cut_card)
+
         return points
 
     def combinations(self, cut_card=None):
@@ -109,6 +111,43 @@ class Hand:
             return 0
 
     @staticmethod
+    def _score_straight(cards, cut_card):
+        # can't use each indiv combination by itself because we only score the largest straight - i.e., a straight of three
+        # scores 3, but ONLY if there's no straight of four or five; at the same time we DO want to use the combinations so
+        # we can handle multiple straights from  duplicate cards - like AS, 2S, 3S and AS, 2H, 3S
+        # so we'll figure out the longest straight using _all_ the cards and score only straights of that length
+        all_cards = Hand._add_to_list_if_not_none(cards, cut_card)
+
+        length_of_longest_straight = Hand._get_length_of_longest_straight(all_cards)
+
+        # TODO if/as I move scoring routines to instance methods I won't need to recreate a Hand instance here
+        for combination in .combinations(cut_card):
+
+
+        return 0
+
+    @staticmethod
+    def _get_length_of_longest_straight(cards):
+        # to help score straights, what's the length of the longest straight? (including one or two)
+        # assumes cards ordered by rank (which is default ordering defined by the Card class)
+        length_of_longest_straight = 1
+        curr_rank_index = cards[0].rank_index # first card
+        for curr_card in cards[1:]: # check against all subsequent cards
+            prev_rank_index = curr_rank_index
+            curr_rank_index = curr_card.rank_index
+            if prev_rank_index == curr_rank_index:
+                # doesn't stop run, doesn't continue it
+                pass 
+            elif curr_rank_index == (prev_rank_index + 1):
+                # one more than prev rank: continues straight
+                length_of_longest_straight += 1
+            else:
+                # not same or one more, so breaks straight
+                length_of_longest_straight = 1
+
+        return length_of_longest_straight
+
+    @staticmethod
     def _add_to_list_if_not_none(seq, new_item):
         # looks like Python doesn't provide this generally and the shortest would still be something like:
         # return seq if new_item is None else seq + [new_item]
@@ -129,7 +168,7 @@ class Card:
         return (self.rank, self.suit) == (other.rank, other.suit)
 
     def __lt__(self, other):
-        return (RANKS.index(self.rank), SUITS.index(self.suit)) < (RANKS.index(other.rank), SUITS.index(other.suit))  
+        return (self.rank_index, self.suit_index) < (other.rank_index, other.suit_index)  
 
     def __repr__(self):
         return f'{self.rank}{self.suit}'
@@ -163,3 +202,11 @@ class Card:
             return int(self.rank)
         else:
             raise ValueError(f"Invalid rank: '{self.rank}'")
+
+    @property
+    def rank_index(self):
+        return RANKS.index(self.rank)
+
+    @property
+    def suit_index(self):
+        return SUITS.index(self.suit)
