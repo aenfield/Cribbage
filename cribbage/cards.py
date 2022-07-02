@@ -46,20 +46,12 @@ class Hand:
         return Hand([Card.from_spec(spec) for spec in specs])
 
     def score(self, cut_card=None, crib=False):
-        #cards_hand_only = self._cards
-        #cards_with_cut = Hand._add_to_list_if_not_none(self._cards, cut_card)
-
         points = 0
         
-        # points += Hand._score_15(self.combinations(cut_card))
-        # points += Hand._score_pair(self.combinations(cut_card))
         points += Hand._score_with_combinations(Hand._score_15, self.combinations(cut_card))
         points += Hand._score_with_combinations(Hand._score_pair, self.combinations(cut_card))
-
         points += Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations())
-
         points += Hand._score_all_straights(self._cards, cut_card)
-
         points += Hand._score_nobs(self._cards, cut_card)
 
         return points

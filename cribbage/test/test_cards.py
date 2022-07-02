@@ -191,10 +191,6 @@ class TestHand:
     def test_hand_doesnt_score_nobs_with_jack_of_wrong_suit(self):
         assert cards.Hand.from_specs(['7D','JS','3H','4D']).score(cards.Card.from_spec('6D')) == 0
 
-    # TODO can score hand - size four, with cut card 
-    # TODO for scoring, support nobs
-    # TODO note that flushes require the four non-cut cards to be the same suit, so scoring does require knowing what it is
-
 
 class TestCard:
     def test_card_has_rank_and_suit(self):
