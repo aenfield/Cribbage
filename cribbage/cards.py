@@ -1,5 +1,6 @@
-from calendar import c
+#from calendar import c
 import itertools
+#from operator import length_hint
 
 # I based some of the cards impl off of ideas and code in the O'Reilly "Fluent Python" book.
 RANKS = list('A23456789TJQK')
@@ -57,7 +58,7 @@ class Hand:
 
         points += Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations())
 
-        points += Hand._score_straight(self._cards, cut_card)
+        points += Hand._score_all_straights(self._cards, cut_card)
 
         return points
 
@@ -111,7 +112,7 @@ class Hand:
             return 0
 
     @staticmethod
-    def _score_straight(cards, cut_card):
+    def _score_all_straights(cards, cut_card):
         # can't use each indiv combination by itself because we only score the largest straight - i.e., a straight of three
         # scores 3, but ONLY if there's no straight of four or five; at the same time we DO want to use the combinations so
         # we can handle multiple straights from  duplicate cards - like AS, 2S, 3S and AS, 2H, 3S
@@ -120,18 +121,25 @@ class Hand:
 
         length_of_longest_straight = Hand._get_length_of_longest_straight(all_cards)
 
-        # TODO if/as I move scoring routines to instance methods I won't need to recreate a Hand instance here
-        for combination in .combinations(cut_card):
+        score = 0
+        if length_of_longest_straight >= 3:
+            # TODO if/as I move scoring routines to instance methods I won't need to recreate a Hand instance here
+            right_size_combos = [combo for combo in Hand(all_cards).combinations() if len(combo) == length_of_longest_straight]
 
+            for combo in right_size_combos:
+                if Hand._get_length_of_longest_straight(combo) == length_of_longest_straight:
+                    score += length_of_longest_straight
 
-        return 0
+        return score
 
     @staticmethod
     def _get_length_of_longest_straight(cards):
         # to help score straights, what's the length of the longest straight? (including one or two)
         # assumes cards ordered by rank (which is default ordering defined by the Card class)
-        length_of_longest_straight = 1
+        length_of_longest_straight = 0
+        length_of_current_straight = 1
         curr_rank_index = cards[0].rank_index # first card
+
         for curr_card in cards[1:]: # check against all subsequent cards
             prev_rank_index = curr_rank_index
             curr_rank_index = curr_card.rank_index
@@ -140,11 +148,13 @@ class Hand:
                 pass 
             elif curr_rank_index == (prev_rank_index + 1):
                 # one more than prev rank: continues straight
-                length_of_longest_straight += 1
+                length_of_current_straight += 1
             else:
-                # not same or one more, so breaks straight
-                length_of_longest_straight = 1
+                # not same or one more, so breaks straight - consider saving current length, then reset 
+                length_of_longest_straight = max([length_of_longest_straight, length_of_current_straight])
+                length_of_current_straight = 1
 
+        length_of_longest_straight = max([length_of_longest_straight, length_of_current_straight])
         return length_of_longest_straight
 
     @staticmethod

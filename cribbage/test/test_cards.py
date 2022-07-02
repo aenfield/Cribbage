@@ -133,13 +133,26 @@ class TestHand:
 
     # straight
     def test_hand_scores_straight_of_size_three(self):
-        sut_straight = cards.Hand.from_specs(['AD','2S','3H'])
+        sut_straight = cards.Hand.from_specs(['AD','2D','3S','6H'])
         assert sut_straight.score() == 3
 
-    # TODO straight w/ cut card
+    def test_hand_scores_straight_of_size_four(self):
+        sut_straight = cards.Hand.from_specs(['8D','9S','TH','JH'])
+        assert sut_straight.score() == 4
+
+    def test_hand_scores_straight_of_size_four_using_cut(self):
+        sut_straight = cards.Hand.from_specs(['AD','3S','4H'])
+        assert sut_straight.score(cards.Card.from_spec('5H')) == 3
+
+    def test_hand_scores_straight_of_size_five(self):
+        sut_straight = cards.Hand.from_specs(['9D','TS','JH','QH','KH'])
+        assert sut_straight.score() == 5
+
+    def test_hand_scores_multiple_straights(self):
+        sut_straight = cards.Hand.from_specs(['2S','9H','TD','TH','JS'])
+        assert sut_straight.score() == 8 # 6 from straights, two inextricable from pair
+
     # TODO straight w/ cards not ordered (where to best order consistently?)
-    # TODO straight of four and five
-    # TODO multiple straights because of duplicated card
 
     def test_length_of_longest_straight_simple_three(self):
         assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AD','2S','3H'])) == 3
@@ -161,6 +174,9 @@ class TestHand:
 
     def test_length_of_longest_straight_straights_of_two_and_three(self):
         assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['3H','4D','8S','9H','TD'])) == 3
+    
+    def test_length_of_longest_straight_is_three_with_card_at_end(self):
+        assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AD','2D','3S','6H'])) == 3   
 
 
     # TODO can score hand - size four, with cut card 
