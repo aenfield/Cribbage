@@ -184,6 +184,12 @@ class TestHand:
     def test_length_of_longest_straight_is_three_with_card_at_end(self):
         assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AD','2D','3S','6H'])) == 3   
 
+    # nobs
+    def test_hand_scores_nobs(self):
+        assert cards.Hand.from_specs(['7D','JS','3H','4D']).score(cards.Card.from_spec('6S')) == 1
+
+    def test_hand_doesnt_score_nobs_with_jack_of_wrong_suit(self):
+        assert cards.Hand.from_specs(['7D','JS','3H','4D']).score(cards.Card.from_spec('6D')) == 0
 
     # TODO can score hand - size four, with cut card 
     # TODO for scoring, support nobs

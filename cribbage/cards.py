@@ -60,6 +60,8 @@ class Hand:
 
         points += Hand._score_all_straights(self._cards, cut_card)
 
+        points += Hand._score_nobs(self._cards, cut_card)
+
         return points
 
     def combinations(self, cut_card=None):
@@ -133,6 +135,15 @@ class Hand:
                     score += length_of_longest_straight
 
         return score
+
+    @staticmethod
+    def _score_nobs(cards, cut_card):
+        if cut_card:
+            for card in cards:
+                if (card.rank == 'J') and (card.suit == cut_card.suit):
+                    return 1
+
+        return 0
 
     @staticmethod
     def _get_length_of_longest_straight(cards):
