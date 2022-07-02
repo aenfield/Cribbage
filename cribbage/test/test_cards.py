@@ -152,7 +152,13 @@ class TestHand:
         sut_straight = cards.Hand.from_specs(['2S','9H','TD','TH','JS'])
         assert sut_straight.score() == 8 # 6 from straights, two inextricable from pair
 
-    # TODO straight w/ cards not ordered (where to best order consistently?)
+    def test_hand_scores_straight_of_size_three_when_starting_unordered(self):
+        sut_straight = cards.Hand.from_specs(['6D','2D','AS','3H'])
+        assert sut_straight.score() == 3
+
+    def test_hand_scores_straight_of_size_four_using_cut_unordered(self):
+        sut_straight = cards.Hand.from_specs(['3D','AS','5H'])
+        assert sut_straight.score(cards.Card.from_spec('4H')) == 3
 
     def test_length_of_longest_straight_simple_three(self):
         assert cards.Hand._get_length_of_longest_straight(cards.Hand.from_specs(['AD','2S','3H'])) == 3

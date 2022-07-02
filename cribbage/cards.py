@@ -117,7 +117,9 @@ class Hand:
         # scores 3, but ONLY if there's no straight of four or five; at the same time we DO want to use the combinations so
         # we can handle multiple straights from  duplicate cards - like AS, 2S, 3S and AS, 2H, 3S
         # so we'll figure out the longest straight using _all_ the cards and score only straights of that length
-        all_cards = Hand._add_to_list_if_not_none(cards, cut_card)
+        
+        # straight scoring needs sorted - Hand doesn't require this for now (at least), so we'll sort here
+        all_cards = sorted(Hand._add_to_list_if_not_none(cards, cut_card))
 
         length_of_longest_straight = Hand._get_length_of_longest_straight(all_cards)
 
