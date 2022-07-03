@@ -191,6 +191,37 @@ class TestHand:
     def test_hand_doesnt_score_nobs_with_jack_of_wrong_suit(self):
         assert cards.Hand.from_specs(['7D','JS','3H','4D']).score(cards.Card.from_spec('6D')) == 0
 
+    # pegging - for now treat this as part of the Hand object (obv could be subclasses to share code, etc.)
+    def test_pegging_scores_nothing(self):
+        assert cards.Hand.from_specs(['7D']).score_pegging() == 0
+
+    def test_pegging_scores_15_with_two_cards(self):
+        assert cards.Hand.from_specs(['7D','8S']).score_pegging() == 2
+
+    def test_pegging_scores_15_with_three_cards(self):
+        assert cards.Hand.from_specs(['2D','6S','7H']).score_pegging() == 2
+
+    def test_pegging_scores_pair_at_beginning_of_sequence(self):
+        assert cards.Hand.from_specs(['2D','2S']).score_pegging() == 2
+
+    def test_pegging_scores_two_pair_at_beginning_of_sequence(self):
+        assert cards.Hand.from_specs(['2D','2S','2H']).score_pegging() == 6
+
+    def test_pegging_scores_three_pair_at_beginning_of_sequence(self):
+        assert cards.Hand.from_specs(['2D','2S','2H','2C']).score_pegging() == 12
+
+    def test_pegging_doesnt_score_pair_at_beginning_of_sequence_with_addtl_card(self):
+        assert cards.Hand.from_specs(['2D','2S','5H']).score_pegging() == 0
+
+    def test_pegging_doesnt_scores_two_pair_with_addtl_card_in_between(self):
+        assert cards.Hand.from_specs(['2D','2S','5H','2H']).score_pegging() == 0
+
+    def test_pegging_scores_pair_at_end(self):
+        assert cards.Hand.from_specs(['2D','AS','5H','2H','2S']).score_pegging() == 2
+
+    def test_pegging_scores_two_pair_at_end(self):
+        assert cards.Hand.from_specs(['2D','AS','5H','2H','2S','2C']).score_pegging() == 6
+
 
 class TestCard:
     def test_card_has_rank_and_suit(self):

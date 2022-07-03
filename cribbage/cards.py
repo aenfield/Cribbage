@@ -56,6 +56,14 @@ class Hand:
 
         return points
 
+    def score_pegging(self):
+        points = 0
+
+        points += Hand._score_15(self._cards)
+        points += Hand._score_pegging_pairs(self._cards)
+
+        return points
+
     def combinations(self, cut_card=None):
         """Return a list of tuples, one for each combination of the four (or five, with cut) cards."""
         cards = Hand._add_to_list_if_not_none(self._cards, cut_card)
@@ -78,9 +86,28 @@ class Hand:
     @staticmethod
     def _score_pair(cards_with_cut):
         if len(cards_with_cut) == 2 and cards_with_cut[0].rank == cards_with_cut[1].rank:
-                return 2
+            return 2
         else:
             return 0
+
+    @staticmethod
+    def _score_pegging_pairs(cards):
+        # first, starting at the last card, how many cards do we have that match (the last card's rank)?
+        last_card_rank = cards[-1].rank
+        cards_matching_last_rank = 0 
+        for card in list(reversed(cards))[1:]:
+            if card.rank != last_card_rank:
+                break
+            else:
+                cards_matching_last_rank += 1
+
+        if cards_matching_last_rank > 0:
+            # returns 2, 6, or 12
+            score = (2**(cards_matching_last_rank)) + (2*(cards_matching_last_rank-1))
+        else:
+            score = 0
+
+        return score
 
     @staticmethod
     def _score_flush(cards_hand_only, cut_card=None, crib=False):
