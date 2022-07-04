@@ -60,6 +60,7 @@ class Hand:
         points = 0
 
         points += Hand._score_15(self._cards)
+        points += Hand._score_31(self._cards)
         points += Hand._score_pegging_pairs(self._cards)
         points += Hand._score_pegging_straights(self._cards)
 
@@ -80,13 +81,20 @@ class Hand:
         return sum(points_for_all_combinations)
 
     @staticmethod
-    def _score_15(cards_with_cut):
-        total = sum([card.value for card in cards_with_cut])
-        return 2 if total == 15 else 0
+    def _get_value_total(cards):
+        return sum([card.value for card in cards])
 
     @staticmethod
-    def _score_pair(cards_with_cut):
-        if len(cards_with_cut) == 2 and cards_with_cut[0].rank == cards_with_cut[1].rank:
+    def _score_15(cards):
+        return 2 if Hand._get_value_total(cards) == 15 else 0
+
+    @staticmethod
+    def _score_31(cards):
+        return 1 if Hand._get_value_total(cards) == 31 else 0
+
+    @staticmethod
+    def _score_pair(cards):
+        if len(cards) == 2 and cards[0].rank == cards[1].rank:
             return 2
         else:
             return 0

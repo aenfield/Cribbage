@@ -222,6 +222,9 @@ class TestHand:
     def test_pegging_scores_two_pair_at_end(self):
         assert cards.Hand.from_specs(['2D','AS','5H','2H','2S','2C']).score_pegging() == 6
 
+    def test_pegging_scores_three_pair_and_15(self):
+        assert cards.Hand.from_specs(['5H','5D','5S']).score_pegging() == 8
+
     def test_pegging_scores_ordered_run(self):
         assert cards.Hand.from_specs(['AD','2S','3H']).score_pegging() == 3
 
@@ -236,6 +239,12 @@ class TestHand:
 
     def test_pegging_doesnt_score_unordered_run_at_beginning(self):
         assert cards.Hand.from_specs(['6D','5S','7H','AD']).score_pegging() == 0
+
+    def test_pegging_scores_one_for_31(self):
+        assert cards.Hand.from_specs(['6D','5S','7H','4H','4D','5H']).score_pegging() == 1
+
+    def test_pegging_scores_one_for_31_and_three_for_run(self):
+        assert cards.Hand.from_specs(['6D','5S','5H','5D','4D','6S']).score_pegging() == 4
 
 
 class TestCard:
