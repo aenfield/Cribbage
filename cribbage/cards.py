@@ -61,6 +61,7 @@ class Hand:
 
         points += Hand._score_15(self._cards)
         points += Hand._score_pegging_pairs(self._cards)
+        points += Hand._score_pegging_straights(self._cards)
 
         return points
 
@@ -152,6 +153,22 @@ class Hand:
             for combo in right_size_combos:
                 if Hand._get_length_of_longest_straight(combo) == length_of_longest_straight:
                     score += length_of_longest_straight
+
+        return score
+
+    @staticmethod
+    def _score_pegging_straights(cards):
+        score = 0 
+        if len(cards) >= 3:
+            # start w/ the last three cards and keep checking w/ more cards until there's no longer a run or we're done 
+            for num_cards in range(3, len(cards) + 1):
+                cards_subset = list(reversed(cards))[:num_cards]
+                if Hand._get_length_of_longest_straight(sorted(cards_subset)) == num_cards:
+                    # straight of this length
+                    score = num_cards
+                else:
+                    # not a straight - exit loop and use whatever the last score is/was
+                    break
 
         return score
 
