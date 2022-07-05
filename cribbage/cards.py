@@ -1,6 +1,4 @@
-#from calendar import c
 import itertools
-#from operator import length_hint
 
 # I based some of the cards impl off of ideas and code in the O'Reilly "Fluent Python" book.
 RANKS = list('A23456789TJQK')
