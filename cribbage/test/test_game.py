@@ -1,4 +1,5 @@
 import game
+import cards
 
 class TestGame:
     def test_game_has_players(self):
@@ -10,10 +11,24 @@ class TestGame:
         sut = game.Game()
         assert len(sut.deck) == 52
 
-    def test_game_has_play(self):
-        sut = game.Game()
-        sut.play()
+    # def test_game_has_play(self):
+    #     sut = game.Game()
+    #     sut.play()
 
 
-# class TestPlayer:
-#     def test_player
+class TestPlayer:
+    def test_player_has_score(self):
+        sut = game.Player()
+        assert sut.score == 0
+
+    def test_player_has_hand(self):
+        sut = game.Player()
+        assert sut.hand is None
+
+    def test_player_prints_status(self):
+        sut = game.Player()
+        sut.hand = cards.Deck().draw_hand(6)
+        status = sut.status()
+        assert sut.name in status
+        assert "Score: 0" in status
+        assert "Hand:" in status 
