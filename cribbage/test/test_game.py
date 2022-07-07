@@ -11,6 +11,14 @@ class TestGame:
         sut = game.Game()
         assert len(sut.deck) == 52
 
+    def test_game_prints_status(self):
+        sut = game.Game()
+        status = sut.status()
+        assert "Player 1" in status
+        assert "Player 2" in status
+        assert "hand" in status
+        assert "None" in status # haven't drawn a hand so the hand text will say 'None'
+
     # def test_game_has_play(self):
     #     sut = game.Game()
     #     sut.play()
@@ -30,5 +38,12 @@ class TestPlayer:
         sut.hand = cards.Deck().draw_hand(6)
         status = sut.status()
         assert sut.name in status
-        assert "Score: 0" in status
-        assert "Hand:" in status 
+        assert "0" in status # score
+        assert "hand" in status
+        assert "2" in status # there's a 2 card
+        assert "crib" not in status
+
+    def test_player_has_crib_property_and_status_shows_crib(self):
+        sut = game.Player(crib=True)
+        status = sut.status()
+        assert "crib" in status
