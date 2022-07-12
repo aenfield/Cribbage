@@ -1,3 +1,4 @@
+from numpy import cumprod
 import game
 import cards
 
@@ -47,3 +48,14 @@ class TestPlayer:
         sut = game.Player(crib=True)
         status = sut.status()
         assert "crib" in status
+
+    def test_player_get_crib_cards_returns_two_cards(self):
+        sut = game.Player()
+        sut.hand = cards.Deck().draw_hand(6)
+        crib_cards = sut.get_crib_cards()
+        assert len(crib_cards) == 2
+        assert crib_cards[0] == cards.Card.from_spec('AS')
+        assert crib_cards[1] == cards.Card.from_spec('2S')
+
+    def test_can_create_player_UI_instance(self):
+        sut = game.UIPlayer()
