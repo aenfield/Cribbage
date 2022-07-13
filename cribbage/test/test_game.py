@@ -1,6 +1,7 @@
-from numpy import cumprod
 import game
 import cards
+
+import pytest
 
 class TestGame:
     def test_game_has_players(self):
@@ -59,3 +60,27 @@ class TestPlayer:
 
     def test_can_create_player_UI_instance(self):
         sut = game.UIPlayer()
+
+    def test_player_uses_injected_func_for_input_and_defines_crib_cards(self):
+        # ideally I could test the injected func separate from anything, but I can't think how now, 
+        # so I'll test it with crib_cards - using the defined func/text to select a diff set of cards
+        sut = game.UIPlayer(input_func = lambda x: '3S, 5S')
+        sut.hand = cards.Deck().draw_hand(6)
+        crib_cards = sut.get_crib_cards()
+        assert len(crib_cards) == 2
+        assert crib_cards[0] == cards.Card.from_spec('3S')
+        assert crib_cards[1] == cards.Card.from_spec('5S')
+
+    def test_player_get_crib_cards_fails_when_at_least_one_card_doesnt_exist_in_hand(self):
+        sut = game.UIPlayer(input_func = lambda x: 'JS,4S')
+        sut.hand = cards.Deck().draw_hand(6)
+        with pytest.raises(ValueError):
+            no_crib_cards = sut.get_crib_cards()
+
+    def test_player_get_crib_cards_removes_crib_cards_from_hand(self):
+        sut = game.UIPlayer(input_func = lambda x: '3S,AS')
+        sut.hand = cards.Deck().draw_hand(6)
+        crib_cards = sut.get_crib_cards()
+        assert len(sut.hand) == 4
+        assert cards.Card.from_spec('3S') not in sut.hand
+        assert cards.Card.from_spec('AS') not in sut.hand

@@ -33,6 +33,8 @@ class Game:
         player_one_crib_cards = self.player_one.get_crib_cards()
         player_two_crib_cards = self.player_two.get_crib_cards()
 
+        print_with_separating_line(self.status())
+
         # TODO print player hand, get crib choices
         # TODO the play, printing played card sequence and remaining cards in hand, scoring
         # TODO score both hands and crib
@@ -40,7 +42,7 @@ class Game:
 
 
 class Player:
-    def __init__(self, name=None, crib=False):
+    def __init__(self, name=None, crib=False, input_func=input):
         if name:
             self.name = name
         else:
@@ -49,23 +51,42 @@ class Player:
         self.score = 0
         self.hand = None
         self.crib = crib
+        self.input_func = input_func
 
     def status(self):
         crib_status = '(crib)' if self.crib else ''
         return f'{self.name}: {self.score}; {crib_status}hand: {str(self.hand)}'
 
     def get_crib_cards(self):
+        """
+        Called by external code, like Game - does validation and removal from hand, defers choosing which cards 
+        to get_candidate_crib_cards.
+        """
+        crib_cards = self.get_candidate_crib_cards()
+        print(f'Specs for crib cards: {crib_cards}')
+
+        #if not all([candidate_crib_card in self.hand for candidate_crib_card in crib_cards]):
+            # raise ValueError(f'At least one specified card not found in hand: {crib_cards} not in {self.hand}.')
+
+        for crib_card in crib_cards:
+            try:
+                self.hand.remove(crib_card)
+            except ValueError:
+                raise ValueError(f'At least one specified card not found in hand: {crib_cards} not in {self.hand}.')
+
+        return crib_cards
+
+
+    def get_candidate_crib_cards(self):
         # base class just returns the first two cards; subclasses can do things differently (like use UI)
         return self.hand[:2]
 
-
 class UIPlayer(Player):
-    def get_crib_cards(self):
+    def get_candidate_crib_cards(self):
         print(self.status())
-        crib_card_specs_as_str = input('Enter crib cards, comma separated:')
-        crib_card_specs = crib_card_specs_as_str.split(',')
+        crib_card_specs_as_str = self.input_func('Enter crib cards, comma separated:')
+        crib_card_specs = [s.strip() for s in crib_card_specs_as_str.split(',')] # split on comma, strip whitespace
         crib_cards = [cards.Card.from_spec(crib_card_specs[0]), cards.Card.from_spec(crib_card_specs[1])]
-        print(f'Selected crib cards: {crib_cards}')
         return crib_cards
 
 
