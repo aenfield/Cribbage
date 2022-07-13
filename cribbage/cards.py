@@ -26,7 +26,7 @@ class Deck:
         hand = self._cards[:size]
         del self._cards[:size]
         # TODO should handle case when deck is empty - won't (ever?) happen in cribbage so I won't worry about it now (or maybe calling code should handle?)
-        return hand
+        return Hand(hand)
 
 
 class Hand:
@@ -39,9 +39,15 @@ class Hand:
     def __getitem__(self, position):
         return self._cards[position]
 
+    def __repr__(self):
+        return repr(self._cards) # just print the representation of the internal array
+
     @staticmethod
     def from_specs(specs):
         return Hand([Card.from_spec(spec) for spec in specs])
+
+    def remove(self, card):
+        self._cards.remove(card)
 
     def score(self, cut_card=None, crib=False):
         points = 0

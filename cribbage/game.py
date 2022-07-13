@@ -35,7 +35,9 @@ class Game:
 
         print_with_separating_line(self.status())
 
-        # TODO print player hand, get crib choices
+        print(self.player_one.hand.score())
+        print(self.player_two.hand.score())
+
         # TODO the play, printing played card sequence and remaining cards in hand, scoring
         # TODO score both hands and crib
 
@@ -54,8 +56,8 @@ class Player:
         self.input_func = input_func
 
     def status(self):
-        crib_status = '(crib)' if self.crib else ''
-        return f'{self.name}: {self.score}; {crib_status}hand: {str(self.hand)}'
+        crib_status = ' (crib)' if self.crib else ''
+        return f'{self.name}: {self.score}{crib_status}; hand: {self.hand}'
 
     def get_crib_cards(self):
         """
@@ -64,9 +66,6 @@ class Player:
         """
         crib_cards = self.get_candidate_crib_cards()
         print(f'Specs for crib cards: {crib_cards}')
-
-        #if not all([candidate_crib_card in self.hand for candidate_crib_card in crib_cards]):
-            # raise ValueError(f'At least one specified card not found in hand: {crib_cards} not in {self.hand}.')
 
         for crib_card in crib_cards:
             try:
@@ -91,5 +90,5 @@ class UIPlayer(Player):
 
 
 if __name__ == '__main__':
-    g = Game(UIPlayer('Player 1'), UIPlayer('Player 2'))
+    g = Game(UIPlayer('Player 1', crib=True), UIPlayer('Player 2'))
     g.play()

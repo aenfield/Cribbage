@@ -58,6 +58,16 @@ class TestHand:
         assert sut_h2[0].rank == '7'
         assert sut_h2[0].suit == 'S'
 
+    def test_hand_repr_gives_list(self):
+        sut_hand = cards.Hand.from_specs(['2S', '4C', '6D', '8H'])
+        assert repr(sut_hand) == '[2S, 4C, 6D, 8H]'
+
+    def test_can_remove_card_from_hand(self):
+        sut_hand = cards.Hand.from_specs(['2S', '4C', '6D', '8H'])
+        sut_hand.remove(cards.Card.from_spec('4C'))
+        assert len(sut_hand) == 3
+        assert cards.Card.from_spec('4C') not in sut_hand
+
     def test_hand_exposes_card_combinations(self):
         sut_hand = cards.Hand.from_specs(['2S', '4C', '6D', '8H'])
         assert len(sut_hand.combinations()) == 15
