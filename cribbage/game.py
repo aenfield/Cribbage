@@ -12,10 +12,16 @@ class Game:
         self.player_two = player_two if player_two else Player('Player 2')
 
         self.deck = cards.Deck()
+        self.cut_card = None
 
     def status(self):
-        return '{0}\n{1}'.format(self.player_one.status(), self.player_two.status())
+        return '{0}\n{1}\nCut card: {2}'.format(self.player_one.status(), self.player_two.status(), self.cut_card)
         # above uses .format because f-strings don't support things like \n
+
+    def cut_cards(self):
+        # shuffles deck as a side-effect
+        shuffle(self.deck)
+        self.cut_card = self.deck.draw_hand(1)[0] # indexer to return the Card, not the Hand containing the Card
 
     def play(self):
 
@@ -33,10 +39,13 @@ class Game:
         player_one_crib_cards = self.player_one.get_crib_cards()
         player_two_crib_cards = self.player_two.get_crib_cards()
 
+        self.cut_cards()
         print_with_separating_line(self.status())
 
-        print(self.player_one.hand.score())
-        print(self.player_two.hand.score())
+        print(self.player_one.status())
+        print_with_separating_line(self.player_one.hand.score(cut_card=self.cut_card))
+        print(self.player_two.status())
+        print_with_separating_line(self.player_two.hand.score(cut_card=self.cut_card))
 
         # TODO the play, printing played card sequence and remaining cards in hand, scoring
         # TODO score both hands and crib

@@ -52,13 +52,25 @@ class Hand:
     def score(self, cut_card=None, crib=False):
         points = 0
         
-        points += Hand._score_with_combinations(Hand._score_15, self.combinations(cut_card))
-        points += Hand._score_with_combinations(Hand._score_pair, self.combinations(cut_card))
-        points += Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations())
-        points += Hand._score_all_straights(self._cards, cut_card)
-        points += Hand._score_nobs(self._cards, cut_card)
+        # points += Hand._score_with_combinations(Hand._score_15, self.combinations(cut_card))
+        # points += Hand._score_with_combinations(Hand._score_pair, self.combinations(cut_card))
+        # points += Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations())
+        # points += Hand._score_all_straights(self._cards, cut_card)
+        # points += Hand._score_nobs(self._cards, cut_card)
+
+        points += Hand._print_scoring('Fifteens', Hand._score_with_combinations(Hand._score_15, self.combinations(cut_card)))
+        points += Hand._print_scoring('Pairs', Hand._score_with_combinations(Hand._score_pair, self.combinations(cut_card)))
+        points += Hand._print_scoring('Flush', Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations()))
+        points += Hand._print_scoring('Runs', Hand._score_all_straights(self._cards, cut_card))
+        points += Hand._print_scoring('Nobs', Hand._score_nobs(self._cards, cut_card))
 
         return points
+
+    @staticmethod
+    def _print_scoring(desc, score):
+        if score > 0:
+            print(f'{desc} score(s) {score}.') 
+        return score
 
     def score_pegging(self):
         points = 0

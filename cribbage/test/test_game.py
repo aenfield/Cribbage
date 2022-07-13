@@ -20,6 +20,12 @@ class TestGame:
         assert "Player 2" in status
         assert "hand" in status
         assert "None" in status # haven't drawn a hand so the hand text will say 'None'
+        assert "Cut card" in status
+
+    def test_game_can_cut_card(self):
+        sut = game.Game()
+        sut.cut_cards()
+        assert isinstance(sut.cut_card, cards.Card)
 
     # def test_game_has_play(self):
     #     sut = game.Game()
