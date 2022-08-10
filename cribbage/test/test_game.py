@@ -27,9 +27,41 @@ class TestGame:
         sut.cut_cards()
         assert isinstance(sut.cut_card, cards.Card)
 
-    # def test_game_has_play(self):
-    #     sut = game.Game()
-    #     sut.play()
+    def test_score_cards_no_crib(self):
+        sut = game.Game()
+        sut.player_one.hand = cards.Hand.from_specs(['2C','3S','3C','8D'])
+        sut.update_player_score(sut.player_one)
+        assert sut.player_one.score == 2
+
+    def test_score_cards_crib(self):
+        sut = game.Game()
+        sut.crib = cards.Hand.from_specs(['2C','3S','3C','8D'])
+        sut.update_player_score(sut.player_one, crib=True)
+        assert sut.player_one.score == 2
+
+    def test_score_cards_says_when_player_wins(self):
+        sut = game.Game(score_to_win=1)
+        sut.player_one.hand = cards.Hand.from_specs(['2C','3S','3C','8D'])
+        is_win = sut.update_player_score(sut.player_one)
+        assert is_win == True
+
+    def test_score_cards_says_when_player_hasnt_won(self):
+        sut = game.Game() # so, score_to_win is 120
+        sut.player_one.hand = cards.Hand.from_specs(['2C','3S','3C','8D'])
+        is_win = sut.update_player_score(sut.player_one)
+        assert is_win == False
+
+    def test_game_has_crib_and_non_crib_players(self):
+        sut = game.Game()
+        assert sut.player_one is sut.crib_player
+        assert sut.player_two is sut.non_crib_player
+
+    def test_can_swap_crib_player(self):
+        sut = game.Game()
+        sut.swap_crib_player()
+        assert sut.player_two is sut.crib_player
+        assert sut.player_one is sut.non_crib_player 
+
 
 
 class TestPlayer:

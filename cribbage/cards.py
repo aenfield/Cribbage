@@ -24,14 +24,14 @@ class Deck:
         self._cards[key] = value
 
     def draw_hand(self, size, sort=False):
-        hand = self._cards[:size]
+        hand_cards = self._cards[:size]
 
         if sort:
-            hand = sorted(hand)
+            hand_cards = sorted(hand_cards)
 
         del self._cards[:size]
         # TODO should handle case when deck is empty - won't (ever?) happen in cribbage so I won't worry about it now (or maybe calling code should handle?)
-        return Hand(hand)
+        return Hand(hand_cards)
 
 
 class Hand:
@@ -53,7 +53,6 @@ class Hand:
         return repr(self._cards) # just print the representation of the internal array
 
     def copy(self):
-        #return Hand(self._cards)
         return copy.deepcopy(self)
 
     @staticmethod
