@@ -1,4 +1,5 @@
 import itertools
+import copy
 
 # I based some of the cards impl off of ideas and code in the O'Reilly "Fluent Python" book.
 RANKS = list('A23456789TJQK')
@@ -22,8 +23,12 @@ class Deck:
         # key is the index position in the deck, value is the Card instance
         self._cards[key] = value
 
-    def draw_hand(self, size):
+    def draw_hand(self, size, sort=False):
         hand = self._cards[:size]
+
+        if sort:
+            hand = sorted(hand)
+
         del self._cards[:size]
         # TODO should handle case when deck is empty - won't (ever?) happen in cribbage so I won't worry about it now (or maybe calling code should handle?)
         return Hand(hand)
@@ -39,8 +44,17 @@ class Hand:
     def __getitem__(self, position):
         return self._cards[position]
 
+    # to support random.shuffle
+    def __setitem__(self, key, value):
+        # key is the index position in the hand, value is the Card instance
+        self._cards[key] = value
+
     def __repr__(self):
         return repr(self._cards) # just print the representation of the internal array
+
+    def copy(self):
+        #return Hand(self._cards)
+        return copy.deepcopy(self)
 
     @staticmethod
     def from_specs(specs):
@@ -52,12 +66,6 @@ class Hand:
     def score(self, cut_card=None, crib=False):
         points = 0
         
-        # points += Hand._score_with_combinations(Hand._score_15, self.combinations(cut_card))
-        # points += Hand._score_with_combinations(Hand._score_pair, self.combinations(cut_card))
-        # points += Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations())
-        # points += Hand._score_all_straights(self._cards, cut_card)
-        # points += Hand._score_nobs(self._cards, cut_card)
-
         points += Hand._print_scoring('Fifteens', Hand._score_with_combinations(Hand._score_15, self.combinations(cut_card)))
         points += Hand._print_scoring('Pairs', Hand._score_with_combinations(Hand._score_pair, self.combinations(cut_card)))
         points += Hand._print_scoring('Flush', Hand._score_with_combinations(lambda c: Hand._score_flush(c, cut_card, crib), self.combinations()))
@@ -127,7 +135,7 @@ class Hand:
                 cards_matching_last_rank += 1
 
         if cards_matching_last_rank > 0:
-            # returns 2, 6, or 12
+            # returns 2, 6, or 12 for 1, 2, or 3 cards matching the last card (i.e., pair, etc.) 
             score = (2**(cards_matching_last_rank)) + (2*(cards_matching_last_rank-1))
         else:
             score = 0

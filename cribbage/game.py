@@ -1,5 +1,5 @@
 import cards
-from random import shuffle
+from random import Random, shuffle
 
 def print_with_separating_line(str):
     print(str)
@@ -31,8 +31,8 @@ class Game:
         # one iteration per hand/peg/score 
         #while True:
         shuffle(self.deck)
-        self.player_one.hand = self.deck.draw_hand(6)
-        self.player_two.hand = self.deck.draw_hand(6)
+        self.player_one.hand = self.deck.draw_hand(6, sort=True)
+        self.player_two.hand = self.deck.draw_hand(6, sort=True)
 
         print_with_separating_line(self.status())
 
@@ -90,6 +90,7 @@ class Player:
         return self.hand[:2]
 
 class UIPlayer(Player):
+    # ask someone, like a real person, potentially via UI (whatever's defined in the input_func, which defaults to 'input')
     def get_candidate_crib_cards(self):
         print(self.status())
         crib_card_specs_as_str = self.input_func('Enter crib cards, comma separated:')
@@ -97,7 +98,17 @@ class UIPlayer(Player):
         crib_cards = [cards.Card.from_spec(crib_card_specs[0]), cards.Card.from_spec(crib_card_specs[1])]
         return crib_cards
 
+class RandomPlayer(Player):
+    # pick cards at random whenever asked
+    def get_candidate_crib_cards(self):
+        print(self.status())
+        hand_copy = self.hand.copy() # copy so we don't change the order of the underlying hand
+        shuffle(hand_copy) 
+        return hand_copy[:2]
+
 
 if __name__ == '__main__':
-    g = Game(UIPlayer('Player 1', crib=True), UIPlayer('Player 2'))
+#    g = Game(UIPlayer('Player 1', crib=True), UIPlayer('Player 2'))
+#    g = Game(UIPlayer('Player 1', crib=True), RandomPlayer('Random Player'))
+    g = Game(RandomPlayer('Random 1', crib=True), RandomPlayer('Random 2'))
     g.play()

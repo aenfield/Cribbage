@@ -83,6 +83,18 @@ class TestHand:
         assert sut_hand_combos[1][0] == cards.Card.from_spec('8D')
         assert sut_hand_combos[2] == (cards.Card.from_spec('7H'), cards.Card.from_spec('8D'))
 
+    def test_hand_can_be_shuffled(self):
+        sut = cards.Hand.from_specs(['2S', '4C', '6D', '8H'])
+        random.shuffle(sut)
+
+    def test_hand_can_be_copied(self):
+        sut_original = cards.Hand.from_specs(['2S', '4C'])
+        sut_copy = sut_original.copy()
+        sut_copy.remove(cards.Card.from_spec('2S'))
+        assert len(sut_copy) == 1
+        assert sut_copy[0] == cards.Card.from_spec('4C')
+
+
     # TODO should update indiv score routines to just use Hand members to simplify call, and because each indiv detail 
     # routine should worry about whether it wants combinations and if so how (for ex, i think runs will need the full hand
     # and the combinations)
