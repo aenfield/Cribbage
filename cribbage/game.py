@@ -1,6 +1,15 @@
-from asyncio.constants import SENDFILE_FALLBACK_READBUFFER_SIZE
 import cards
 from random import Random, shuffle
+
+SCORE_TO_WIN = 120
+
+class WinningScoreException(Exception):
+    """
+    Raised when a player achieves at least the winning score. Defined as an exception so we can check for the condition in a single
+    place (currently in the Player.score property set impl) and affect outer/calling code without requiring a series of return 
+    values and conditional checks. Also, winning doesn't happen much, so it's 'exceptional' :-). 
+    """
+    pass
 
 def print_with_separating_line(str=None):
     if str:
@@ -9,9 +18,9 @@ def print_with_separating_line(str=None):
 
 
 class Game:
-    def __init__(self, player_one=None, player_two=None, score_to_win=120):
-        self.player_one = player_one if player_one else Player('Player 1')
-        self.player_two = player_two if player_two else Player('Player 2')
+    def __init__(self, player_one=None, player_two=None, score_to_win=SCORE_TO_WIN):
+        self.player_one = player_one if player_one else Player('Player 1', score_to_win=score_to_win)
+        self.player_two = player_two if player_two else Player('Player 2', score_to_win=score_to_win)
 
         self.set_player_crib_status(self.player_one, self.player_two)
 
@@ -65,56 +74,64 @@ class Game:
         # TODO draw for first player
 
         # one iteration per hand/peg/score 
-        while True:
-            print_with_separating_line()
-            print_with_separating_line(f"Deal. {self.crib_player.name}'s crib.")
+        try:
+            while True:
+                print_with_separating_line()
+                print_with_separating_line(f"Deal. {self.crib_player.name}'s crib.")
 
-            self.deck = cards.Deck()
-            shuffle(self.deck)
+                self.deck = cards.Deck()
+                shuffle(self.deck)
 
-            self.crib_player.hand = self.deck.draw_hand(6, sort=True)
-            self.non_crib_player.hand = self.deck.draw_hand(6, sort=True)
+                self.crib_player.hand = self.deck.draw_hand(6, sort=True)
+                self.non_crib_player.hand = self.deck.draw_hand(6, sort=True)
 
+                print_with_separating_line(self.status())
+
+                crib_player_crib_cards = self.crib_player.get_crib_cards()
+                non_crib_player_crib_cards = self.non_crib_player.get_crib_cards()
+                self.crib = cards.Hand(sorted(crib_player_crib_cards + non_crib_player_crib_cards))
+
+                self.cut_cards()
+                print_with_separating_line(self.status())
+
+                # TODO the play, printing played card sequence and remaining cards in hand, scoring
+
+
+                print_with_separating_line('Score hands and crib')
+                self.update_player_score(self.non_crib_player, print_output=True)
+                self.update_player_score(self.crib_player, print_output=True)
+                self.update_player_score(self.crib_player, crib=True, print_output=True)
+
+                print_with_separating_line(self.status())
+
+                self.swap_crib_player()
+        except WinningScoreException as e:
             print_with_separating_line(self.status())
-
-            crib_player_crib_cards = self.crib_player.get_crib_cards()
-            non_crib_player_crib_cards = self.non_crib_player.get_crib_cards()
-            self.crib = cards.Hand(sorted(crib_player_crib_cards + non_crib_player_crib_cards))
-
-            self.cut_cards()
-            print_with_separating_line(self.status())
-
-            # TODO the play, printing played card sequence and remaining cards in hand, scoring
-
-            print_with_separating_line('Score hands and crib')
-            # can't break from within the function, so I guess I have to duplicate the check for each call... what's the right/better way to do this?
-            # (update_player_score checks to see if the player in question has one and returns True if so)
-            if self.update_player_score(self.non_crib_player, print_output=True):
-                break
-            if self.update_player_score(self.crib_player, print_output=True):
-                break
-            if self.update_player_score(self.crib_player, crib=True, print_output=True):
-                break
-
-            print_with_separating_line(self.status())
-
-            self.swap_crib_player()
-
-        print_with_separating_line(self.status())
 
 
 
 class Player:
-    def __init__(self, name=None, crib=False, input_func=input):
+    def __init__(self, name=None, crib=False, input_func=input, score_to_win=SCORE_TO_WIN):
         if name:
             self.name = name
         else:
             self.name = 'A player'
 
+        self._score_to_win = score_to_win
         self.score = 0
         self.hand = None
         self.crib = crib
         self.input_func = input_func
+
+    @property 
+    def score(self):
+        return self._score
+
+    @score.setter
+    def score(self, value):
+        self._score = value
+        if self._score >= self._score_to_win:
+            raise WinningScoreException()
 
     def status(self):
         crib_status = ' (crib)' if self.crib else ''
@@ -135,7 +152,6 @@ class Player:
                 raise ValueError(f'At least one specified card not found in hand: {crib_cards} not in {self.hand}.')
 
         return crib_cards
-
 
     def get_candidate_crib_cards(self):
         # base class just returns the first two cards; subclasses can do things differently (like use UI)

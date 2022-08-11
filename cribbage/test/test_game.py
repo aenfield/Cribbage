@@ -42,8 +42,8 @@ class TestGame:
     def test_score_cards_says_when_player_wins(self):
         sut = game.Game(score_to_win=1)
         sut.player_one.hand = cards.Hand.from_specs(['2C','3S','3C','8D'])
-        is_win = sut.update_player_score(sut.player_one)
-        assert is_win == True
+        with pytest.raises(game.WinningScoreException):
+            sut.update_player_score(sut.player_one)
 
     def test_score_cards_says_when_player_hasnt_won(self):
         sut = game.Game() # so, score_to_win is 120
@@ -122,3 +122,22 @@ class TestPlayer:
         assert len(sut.hand) == 4
         assert cards.Card.from_spec('3S') not in sut.hand
         assert cards.Card.from_spec('AS') not in sut.hand
+
+    def test_player_knows_winning_score(self):
+        sut = game.Player()
+        assert sut._score_to_win == 120
+        sut2 = game.Player(score_to_win = 1)
+        assert sut2._score_to_win == 1
+
+    def test_player_score_doesnt_throw_win_exception_without_winning_score(self):
+        sut = game.Player()
+        sut.score = 119
+
+    def test_player_score_throws_win_exception_when_winning_score_is_achieved(self):
+        sut = game.Player(score_to_win=50)
+        with pytest.raises(game.WinningScoreException):
+            sut.score = 50
+
+        sut2 = game.Player()
+        with pytest.raises(game.WinningScoreException):
+            sut.score = 120
