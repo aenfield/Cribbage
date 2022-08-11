@@ -1,5 +1,5 @@
 import cards
-from random import Random, shuffle
+import random   
 
 SCORE_TO_WIN = 120
 
@@ -35,7 +35,7 @@ class Game:
 
     def cut_cards(self):
         # shuffles deck as a side-effect
-        shuffle(self.deck)
+        random.shuffle(self.deck)
         self.cut_card = self.deck.draw_hand(1)[0] # indexer to return the Card, not the Hand containing the Card
 
     def set_player_crib_status(self, crib_player, non_crib_player):
@@ -75,12 +75,14 @@ class Game:
 
         # one iteration per hand/peg/score 
         try:
+            # Note that I test individual parts of this loop, but the loop still has some logic which I don't currently test
+            # TODO probably best to extract the logic so I can test it in test_game.py  
             while True:
                 print_with_separating_line()
                 print_with_separating_line(f"Deal. {self.crib_player.name}'s crib.")
 
                 self.deck = cards.Deck()
-                shuffle(self.deck)
+                random.shuffle(self.deck)
 
                 self.crib_player.hand = self.deck.draw_hand(6, sort=True)
                 self.non_crib_player.hand = self.deck.draw_hand(6, sort=True)
@@ -94,10 +96,11 @@ class Game:
                 self.cut_cards()
                 print_with_separating_line(self.status())
 
-                # TODO the play, printing played card sequence and remaining cards in hand, scoring
-
-
+                # print_with_separating_line('The play')
+                # self.do_play_loop()
+                
                 print_with_separating_line('Score hands and crib')
+                # TODO update name to show that we score the hand/crib and then update score - maybe 'score_cards_and_update_player_score'
                 self.update_player_score(self.non_crib_player, print_output=True)
                 self.update_player_score(self.crib_player, print_output=True)
                 self.update_player_score(self.crib_player, crib=True, print_output=True)
@@ -107,6 +110,30 @@ class Game:
                 self.swap_crib_player()
         except WinningScoreException as e:
             print_with_separating_line(self.status())
+
+    def do_play_loop(self):
+        """Implements 'the play' - pegging, one card at a time, until both players have used all of their cards."""
+        curr_play_cards = [] 
+        all_play_cards = []
+
+        self.player_one.remaining_cards_for_the_play = self.player_one.hand.copy()
+        self.player_two.remaining_cards_for_the_play = self.player_two.hand.copy()
+
+        curr_play_player = self.non_crib_player
+        # TODO loop and call get_and_score_one_play_card
+        # while True: (or some condition)
+        self.get_and_score_one_play_card(curr_play_player, curr_play_cards, all_play_cards)
+
+    def get_and_score_one_play_card(self, player, curr_play_cards, all_play_cards):
+        curr_play_card = player.get_play_card(curr_play_cards, all_play_cards)
+        if curr_play_card:
+            curr_play_cards.append(curr_play_card) # curr_play_cards is passed by ref, so this appends to the master list, as desired
+            # TODO score, output scoring result, and add score to curr_play_player.score
+        else:
+            player.said_go = True
+
+        # check for end states: 31 or both players said go; if end: score last card and set curr player to first go
+        # update curr player - either swap or stay same if other player has said go
 
 
 
@@ -122,6 +149,7 @@ class Player:
         self.hand = None
         self.crib = crib
         self.input_func = input_func
+        self.remaining_cards_for_the_play = [] # currently set by reset_eligible_play_cards
 
     @property 
     def score(self):
@@ -140,7 +168,7 @@ class Player:
     def get_crib_cards(self):
         """
         Called by external code, like Game - does validation and removal from hand, defers choosing which cards 
-        to get_candidate_crib_cards. Returns a list of two Card instances.
+        to get_candidate_crib_cards, which subclasses can override. Returns a list of two Card instances.
         """
         crib_cards = self.get_candidate_crib_cards()
         print_with_separating_line(f'Specs for crib cards: {crib_cards}')
@@ -157,22 +185,56 @@ class Player:
         # base class just returns the first two cards; subclasses can do things differently (like use UI)
         return self.hand[:2]
 
+    def get_play_card(self, curr_play_cards, all_play_cards):
+        """
+        In a similar way as get_crib_cards, this method is called by external code, like Game; this method does validation
+        and removal from cards for the play and defers choosing the exact card to get_candidate_play_card, which subclasses
+        can override.
+        """
+        # TODO check that remaining_play_cards has at least one card that fits and say 'go' w/o calling get_cand... if so
+        candidate_play_card = self.get_candidate_play_card(curr_play_cards, all_play_cards)
+
+        try:
+            self.remaining_cards_for_the_play.remove(candidate_play_card)
+        except ValueError:
+            raise ValueError(f'Specified play card {candidate_play_card} not found in {self.remaining_cards_for_the_play}.')
+
+        print(f'{self.name} plays {candidate_play_card}')
+        return candidate_play_card
+
+    def get_candidate_play_card(self, curr_play_cards, all_play_cards):
+        # base class just returns the first card; subclasses can do things differently (like use UI)
+        # don't have to worry about saying go, as get_play_card will check this first automatically and only call this method if it can return a card 
+        return self.remaining_cards_for_the_play[0]
+
+    def reset_eligible_play_cards(self):
+        # whatever's in the hand we call an eligible play card
+        self.remaining_cards_for_the_play = self.hand
+
 class UIPlayer(Player):
     # ask someone, like a real person, potentially via UI (whatever's defined in the input_func, which defaults to 'input')
     def get_candidate_crib_cards(self):
+        # TODO move status print to get_crib_cards as it's the same in both subclasses?
         print(self.status())
         crib_card_specs_as_str = self.input_func('Enter crib cards, comma separated:')
         crib_card_specs = [s.strip() for s in crib_card_specs_as_str.split(',')] # split on comma, strip whitespace
         crib_cards = [cards.Card.from_spec(crib_card_specs[0]), cards.Card.from_spec(crib_card_specs[1])]
         return crib_cards
 
+    def get_candidate_play_card(self, curr_play_cards, all_play_cards):
+        # TODO add status print for play info - likely curr, all, and eligible?
+        # TODO move/implement that the status print in get_play_card so only have to implement it once?
+        play_card_spec_as_str = self.input_func('Enter play card:')
+        return cards.Card.from_spec(play_card_spec_as_str)
+
 class RandomPlayer(Player):
     # pick cards at random whenever asked
     def get_candidate_crib_cards(self):
         print(self.status())
-        hand_copy = self.hand.copy() # copy so we don't change the order of the underlying hand
-        shuffle(hand_copy) 
-        return hand_copy[:2]
+        return random.sample(list(self.hand), 2) # sample requires a sequence, so use list to get one 
+
+    def get_candidate_play_card(self, curr_play_cards, all_play_cards):
+        return random.choice(self.remaining_cards_for_the_play)
 
 
 if __name__ == '__main__':

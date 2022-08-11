@@ -45,12 +45,6 @@ class TestGame:
         with pytest.raises(game.WinningScoreException):
             sut.update_player_score(sut.player_one)
 
-    def test_score_cards_says_when_player_hasnt_won(self):
-        sut = game.Game() # so, score_to_win is 120
-        sut.player_one.hand = cards.Hand.from_specs(['2C','3S','3C','8D'])
-        is_win = sut.update_player_score(sut.player_one)
-        assert is_win == False
-
     def test_game_has_crib_and_non_crib_players(self):
         sut = game.Game()
         assert sut.player_one is sut.crib_player
@@ -61,6 +55,15 @@ class TestGame:
         sut.swap_crib_player()
         assert sut.player_two is sut.crib_player
         assert sut.player_one is sut.non_crib_player 
+
+    def test_single_play_card_is_appended(self):
+        sut = game.Game()
+        sut.player_one.hand = cards.Hand.from_specs(['2C','3S','3C','8D'])
+        sut.player_one.reset_eligible_play_cards()
+        curr_play_cards, all_play_cards = [], []
+        sut.get_and_score_one_play_card(sut.player_one, curr_play_cards, all_play_cards)
+        assert len(curr_play_cards) == 1
+        assert len(all_play_cards) == 0
 
 
 
@@ -141,3 +144,27 @@ class TestPlayer:
         sut2 = game.Player()
         with pytest.raises(game.WinningScoreException):
             sut.score = 120
+
+    def test_player_get_play_card_returns_a_single_card(self):
+        sut = game.Player()
+        sut.hand = cards.Deck().draw_hand(4)
+        sut.reset_eligible_play_cards()
+        play_card = sut.get_play_card([], [])
+        assert play_card == cards.Card.from_spec('AS')
+        assert len(sut.remaining_cards_for_the_play) == 3
+
+    def test_player_uses_injected_func_for_input_and_defines_play_card(self):
+        sut = game.UIPlayer(input_func = lambda x: '2S')
+        sut.hand = cards.Deck().draw_hand(4)
+        sut.reset_eligible_play_cards()
+        play_card = sut.get_play_card([], [])
+        assert play_card == cards.Card.from_spec('2S')
+        assert len(sut.remaining_cards_for_the_play) == 3
+
+    def test_player_get_play_card_fails_when_card_doesnt_exist_in_eligible_cards(self):
+        sut = game.UIPlayer(input_func = lambda x: 'KS')
+        sut.hand = cards.Deck().draw_hand(4)
+        sut.reset_eligible_play_cards()
+        with pytest.raises(ValueError):
+            no_play_card = sut.get_play_card([], [])
+   
