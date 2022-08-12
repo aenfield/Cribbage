@@ -86,9 +86,31 @@ class TestGame:
         assert curr_play_cards[1] == cards.Card.from_spec('5S')
         assert len(all_play_cards) == 0
 
-    #get_and_score_one_play_card more: 
-    # - 
+    def test_get_and_score_play_card_sets_said_go(self):
+        sut = game.Game()
+        sut.player_one.hand = cards.Hand()
+        sut.player_one.reset_eligible_play_cards()
+        assert sut.player_one.said_go == False
+        sut.get_and_score_one_play_card(sut.player_one, [], [])
+        assert sut.player_one.said_go == True
 
+    def test_get_other_player_simply_swaps(self):
+        sut = game.Game()
+        assert sut._get_other_player(sut.player_one) is sut.player_two
+        assert sut._get_other_player(sut.player_two) is sut.player_one
+
+    def test_get_next_player_for_play_swaps_if_no_go(self):
+        sut = game.Game()
+        next_player = sut._get_next_player_for_play(sut.player_one)
+        assert next_player is sut.player_two
+        next_player_two = sut._get_next_player_for_play(sut.player_two)
+        assert next_player_two is sut.player_one
+
+    def test_get_next_player_for_play_doesnt_swap_if_go(self):
+        sut = game.Game()
+        sut.player_two.said_go = True
+        next_player = sut._get_next_player_for_play(sut.player_one)
+        assert next_player is sut.player_one
 
 
 class TestPlayer:

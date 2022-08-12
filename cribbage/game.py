@@ -47,6 +47,25 @@ class Game:
     def swap_crib_player(self):
         self.set_player_crib_status(self.non_crib_player, self.crib_player)
 
+    def _get_other_player(self, player):
+        if player is self.player_one:
+            return self.player_two
+        elif player is self.player_two:
+            return self.player_one
+        else:
+            raise ValueError('Must specify player_one or player_two.')
+
+    def _get_next_player_for_play(self, curr_player):
+        """
+        Returns the next player to play a card: generally by returning the other player, but also by returning
+        the current player if the other player has already said go. 
+        """
+        other_player = self._get_other_player(curr_player)
+        if not other_player.said_go:
+            return other_player
+        else:
+            return curr_player
+
     def update_player_score(self, player, crib=False, print_output=False):
         # score cards, update score, and return True if score is => the winning threshold and False otherwise
         if not crib:
@@ -96,8 +115,8 @@ class Game:
                 self.cut_cards()
                 print_with_separating_line(self.status())
 
-                # print_with_separating_line('The play')
-                # self.do_play_loop()
+                print_with_separating_line('The play')
+                self.do_play_loop()
                 
                 print_with_separating_line('Score hands and crib')
                 # TODO update name to show that we score the hand/crib and then update score - maybe 'score_cards_and_update_player_score'
@@ -113,35 +132,42 @@ class Game:
 
     def do_play_loop(self):
         """Implements 'the play' - pegging, one card at a time, until both players have used all of their cards."""
-        curr_play_cards = [] 
-        all_play_cards = []
-
+        # init
+        curr_play_cards, used_player_cards = [], [] 
         self.player_one.reset_eligible_play_cards()
         self.player_two.reset_eligible_play_cards()
+        curr_play_player = self.non_crib_player # non-crib player always starts
 
-        curr_play_player = self.non_crib_player
-        # TODO 
-        # while at least one player has at least one card remaining
-        #   set curr player to the opposite of the last player that played a card or to the non-crib player (at start)
-        #   set both player's said_go to false
-        #   move curr_play_cards to used_play_cards (will move empty list to empty list in first iteration)
-        #   while True: # inner loop for particular 0-31 iteration, exits via break so while True
-        #       get card from player, score card, add card to curr cards, set go if no card (via get_and_score_one_play_card) 
-        #       if score == 31 or both players have said go:
-        #           if score != 31:
-        #               score +1 for curr player (always will have been last player to play?)
-        #          else:
-        #               score +2 for curr player
-        #       else:
-        #           # continue inner loop
-        #           find and set next player (likely via func, look at other player and if they've haven't said go then swap, otherwise leave curr player unchanged)           
-        #           (above needs simple 'get_other_player' func on Game)
+        while (len(self.player_one.remaining_cards_for_the_play) > 0) or (len(self.player_two.remaining_cards_for_the_play) > 0):
+            # outer loop, one iteration per trip to 31
+            self.player_one.said_go, self.player_two.said_go = False, False
+            used_player_cards += used_player_cards + curr_play_cards
+            curr_play_cards = []
 
+            while True: 
+                # inner loop for particular 0-31 iteration, exits via break so while True
+                self.get_and_score_one_play_card(curr_play_player, curr_play_cards, used_player_cards)
+                played_card_total_value = cards.Hand.get_value_total(curr_play_cards)
 
-        self.get_and_score_one_play_card(curr_play_player, curr_play_cards, all_play_cards)
+                if (played_card_total_value == 31) or (self.player_one.said_go and self.player_two.said_go):
+                    # done with this iteration
+                    if played_card_total_value != 31:
+                        last_play_score = 1
+                    else: # got to 31
+                        last_play_score = 2 
+                    
+                    curr_play_player.score += last_play_score
+                    print(f'{curr_play_player.name} played the last card for a total of {played_card_total_value}, scoring {last_play_score}.')
+                    curr_play_player = self._get_other_player(curr_play_player) # set curr player to opposite of player that last played a card (hopefully this is always the same as the player who first said go?)
+                    break
+                else:
+                    # still going with this 0-31 trip
+                    curr_play_player = self._get_next_player_for_play(curr_play_player)
+
 
     def get_and_score_one_play_card(self, player, curr_play_cards, all_play_cards):
         curr_play_card = player.get_play_card(curr_play_cards, all_play_cards)
+        
         if curr_play_card:
             print(f'{player.name} played {curr_play_card}')
             curr_play_cards.append(curr_play_card) # curr_play_cards is passed by ref, so this appends to the master list, as desired
@@ -149,7 +175,10 @@ class Game:
             player.score += score_from_card
             if score_from_card > 0:
                 print(f'{player.name} scored {score_from_card}')
-        
+        else:
+            # got None, which is a go (or no cards at all in hand, currently also None/go - I could update to return diff values if needed)
+            print(f'{player.name} said go (or had no cards at all to play)')
+            player.said_go = True        
 
 
 class Player:
@@ -165,6 +194,7 @@ class Player:
         self.crib = crib
         self.input_func = input_func
         self.remaining_cards_for_the_play = [] # currently set by reset_eligible_play_cards
+        self.said_go = False
 
     @property 
     def score(self):
