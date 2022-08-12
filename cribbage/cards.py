@@ -35,7 +35,10 @@ class Deck:
 
 
 class Hand:
-    def __init__(self, cards):
+    def __init__(self, cards=None):
+        if cards is None:
+            cards = []
+            
         self._cards = cards
 
     def __len__(self):

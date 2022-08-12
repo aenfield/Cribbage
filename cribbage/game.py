@@ -116,12 +116,29 @@ class Game:
         curr_play_cards = [] 
         all_play_cards = []
 
+        # TODO should use reset_eligible...
         self.player_one.remaining_cards_for_the_play = self.player_one.hand.copy()
         self.player_two.remaining_cards_for_the_play = self.player_two.hand.copy()
 
         curr_play_player = self.non_crib_player
-        # TODO loop and call get_and_score_one_play_card
-        # while True: (or some condition)
+        # TODO 
+        # while at least one player has at least one card remaining
+        #   set curr player to the opposite of the last player that played a card or to the non-crib player (at start)
+        #   set both player's said_go to false
+        #   move curr_play_cards to used_play_cards (will move empty list to empty list in first iteration)
+        #   while True: # inner loop for particular 0-31 iteration, exits via break so while True
+        #       get card from player, score card, add card to curr cards, set go if no card (via get_and_score_one_play_card) 
+        #       if score == 31 or both players have said go:
+        #           if score != 31:
+        #               score +1 for curr player (always will have been last player to play?)
+        #          else:
+        #               score +2 for curr player
+        #       else:
+        #           # continue inner loop
+        #           find and set next player (likely via func, look at other player and if they've haven't said go then swap, otherwise leave curr player unchanged)           
+        #           (above needs simple 'get_other_player' func on Game)
+
+
         self.get_and_score_one_play_card(curr_play_player, curr_play_cards, all_play_cards)
 
     def get_and_score_one_play_card(self, player, curr_play_cards, all_play_cards):
@@ -131,9 +148,6 @@ class Game:
             # TODO score, output scoring result, and add score to curr_play_player.score
         else:
             player.said_go = True
-
-        # check for end states: 31 or both players said go; if end: score last card and set curr player to first go
-        # update curr player - either swap or stay same if other player has said go
 
 
 
@@ -190,16 +204,25 @@ class Player:
         In a similar way as get_crib_cards, this method is called by external code, like Game; this method does validation
         and removal from cards for the play and defers choosing the exact card to get_candidate_play_card, which subclasses
         can override.
-        """
-        # TODO check that remaining_play_cards has at least one card that fits and say 'go' w/o calling get_cand... if so
-        candidate_play_card = self.get_candidate_play_card(curr_play_cards, all_play_cards)
+        """        
+        if len(self.remaining_cards_for_the_play) == 0:
+            candidate_play_card = None
+            msg = 'has no cards'
+        elif (cards.Hand._get_value_total(curr_play_cards) + min([c.value for c in self.hand])) > 31:
+            # smallest card would still make the total > 31, so say go
+            candidate_play_card = None
+            msg = 'says go'
+        else: 
+            candidate_play_card = self.get_candidate_play_card(curr_play_cards, all_play_cards)
+            msg = f'plays {candidate_play_card}'
 
-        try:
-            self.remaining_cards_for_the_play.remove(candidate_play_card)
-        except ValueError:
-            raise ValueError(f'Specified play card {candidate_play_card} not found in {self.remaining_cards_for_the_play}.')
+            try:
+                self.remaining_cards_for_the_play.remove(candidate_play_card)
+            except ValueError:
+                raise ValueError(f'Specified play card {candidate_play_card} not found in {self.remaining_cards_for_the_play}.')
 
-        print(f'{self.name} plays {candidate_play_card}')
+
+        print(f'{self.name} {msg}')
         return candidate_play_card
 
     def get_candidate_play_card(self, curr_play_cards, all_play_cards):

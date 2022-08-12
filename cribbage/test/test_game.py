@@ -167,4 +167,17 @@ class TestPlayer:
         sut.reset_eligible_play_cards()
         with pytest.raises(ValueError):
             no_play_card = sut.get_play_card([], [])
-   
+    
+    def test_player_get_play_card_says_go_with_no_eligible_cards(self):
+        sut = game.Player()
+        sut.hand = cards.Hand()
+        sut.reset_eligible_play_cards()
+        play_card = sut.get_play_card([], [])
+        assert play_card is None
+
+    def test_player_get_play_card_says_go_when_no_cards_fit(self):
+        sut = game.Player()
+        sut.hand = cards.Hand.from_specs(['7C'])
+        sut.reset_eligible_play_cards()
+        play_card = sut.get_play_card([cards.Card.from_spec('KC'), cards.Card.from_spec('KS'), cards.Card.from_spec('5D')], [])
+        assert play_card is None

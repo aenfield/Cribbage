@@ -31,6 +31,10 @@ class TestHand:
         sut = cards.Hand([cards.Card('K', 'S')])
         assert sut[0].rank == 'K'
 
+    def test_can_create_empty_hand(self):
+        sut = cards.Hand()
+        assert len(sut) == 0
+
     def test_can_create_hand_with_multiple_cards_directly(self):
         sut = cards.Hand([cards.Card('K', 'H'), cards.Card('4', 'S')])
         assert len(sut) == 2
