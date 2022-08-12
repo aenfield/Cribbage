@@ -65,6 +65,30 @@ class TestGame:
         assert len(curr_play_cards) == 1
         assert len(all_play_cards) == 0
 
+    def test_get_and_score_play_card_scores_nothing_with_first_card(self):
+        sut = game.Game(game.UIPlayer(input_func = lambda x: '5S'))
+        sut.player_one.hand = cards.Hand.from_specs(['2C','5S','3C','8D'])
+        sut.player_one.reset_eligible_play_cards()
+        curr_play_cards = []
+        sut.get_and_score_one_play_card(sut.player_one, curr_play_cards, [])
+        assert sut.player_one.score == 0
+        assert len(curr_play_cards) == 1
+        assert curr_play_cards[0] == cards.Card.from_spec('5S')
+
+    def test_get_and_score_play_card_scores_second_card(self):
+        sut = game.Game(game.UIPlayer(input_func = lambda x: '5S'))
+        sut.player_one.hand = cards.Hand.from_specs(['2C','5S','3C','8D'])
+        sut.player_one.reset_eligible_play_cards()
+        curr_play_cards, all_play_cards = [cards.Card.from_spec('KD')], []
+        sut.get_and_score_one_play_card(sut.player_one, curr_play_cards, all_play_cards)
+        assert sut.player_one.score == 2
+        assert len(curr_play_cards) == 2
+        assert curr_play_cards[1] == cards.Card.from_spec('5S')
+        assert len(all_play_cards) == 0
+
+    #get_and_score_one_play_card more: 
+    # - 
+
 
 
 class TestPlayer:
@@ -177,7 +201,7 @@ class TestPlayer:
 
     def test_player_get_play_card_says_go_when_no_cards_fit(self):
         sut = game.Player()
-        sut.hand = cards.Hand.from_specs(['7C'])
+        sut.hand = cards.Hand.from_specs(['7C','8C','9D','QS'])
         sut.reset_eligible_play_cards()
-        play_card = sut.get_play_card([cards.Card.from_spec('KC'), cards.Card.from_spec('KS'), cards.Card.from_spec('5D')], [])
+        play_card = sut.get_play_card(cards.Hand.from_specs(['KC','KS','5D']), [])
         assert play_card is None

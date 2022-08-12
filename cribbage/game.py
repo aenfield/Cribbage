@@ -116,9 +116,8 @@ class Game:
         curr_play_cards = [] 
         all_play_cards = []
 
-        # TODO should use reset_eligible...
-        self.player_one.remaining_cards_for_the_play = self.player_one.hand.copy()
-        self.player_two.remaining_cards_for_the_play = self.player_two.hand.copy()
+        self.player_one.reset_eligible_play_cards()
+        self.player_two.reset_eligible_play_cards()
 
         curr_play_player = self.non_crib_player
         # TODO 
@@ -144,11 +143,13 @@ class Game:
     def get_and_score_one_play_card(self, player, curr_play_cards, all_play_cards):
         curr_play_card = player.get_play_card(curr_play_cards, all_play_cards)
         if curr_play_card:
+            print(f'{player.name} played {curr_play_card}')
             curr_play_cards.append(curr_play_card) # curr_play_cards is passed by ref, so this appends to the master list, as desired
-            # TODO score, output scoring result, and add score to curr_play_player.score
-        else:
-            player.said_go = True
-
+            score_from_card = cards.Hand(curr_play_cards).score_pegging()
+            player.score += score_from_card
+            if score_from_card > 0:
+                print(f'{player.name} scored {score_from_card}')
+        
 
 
 class Player:
@@ -208,7 +209,7 @@ class Player:
         if len(self.remaining_cards_for_the_play) == 0:
             candidate_play_card = None
             msg = 'has no cards'
-        elif (cards.Hand._get_value_total(curr_play_cards) + min([c.value for c in self.hand])) > 31:
+        elif (cards.Hand.get_value_total(curr_play_cards) + min([c.value for c in self.hand])) > 31:
             # smallest card would still make the total > 31, so say go
             candidate_play_card = None
             msg = 'says go'

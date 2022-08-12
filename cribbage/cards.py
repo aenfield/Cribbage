@@ -38,7 +38,7 @@ class Hand:
     def __init__(self, cards=None):
         if cards is None:
             cards = []
-            
+
         self._cards = cards
 
     def __len__(self):
@@ -107,16 +107,16 @@ class Hand:
         return sum(points_for_all_combinations)
 
     @staticmethod
-    def _get_value_total(cards):
+    def get_value_total(cards):
         return sum([card.value for card in cards])
 
     @staticmethod
     def _score_15(cards):
-        return 2 if Hand._get_value_total(cards) == 15 else 0
+        return 2 if Hand.get_value_total(cards) == 15 else 0
 
     @staticmethod
     def _score_31(cards):
-        return 1 if Hand._get_value_total(cards) == 31 else 0
+        return 1 if Hand.get_value_total(cards) == 31 else 0
 
     @staticmethod
     def _score_pair(cards):
