@@ -11,11 +11,13 @@ class WinningScoreException(Exception):
     """
     pass
 
-def print_with_separating_line(str=None):
+def print_with_separating_line(str=None, line_before=False, line_after=True):
+    if line_before:
+        print('----')
     if str:
         print(str)
-    print('----')
-
+    if line_after:
+        print('----')
 
 class Game:
     def __init__(self, player_one=None, player_two=None, score_to_win=SCORE_TO_WIN):
@@ -74,13 +76,11 @@ class Game:
             score = player.hand.score(cut_card=self.cut_card)
         else:
             if print_output:
-                print(f'Crib: {self.crib}')
+                print(f'Crib: {self.crib}, cut: {self.cut_card}')
             score = self.crib.score(cut_card=self.cut_card, crib=True)
 
+        print(f'Total score: {score}')
         player.score += score
-
-        if print_output:
-            print_with_separating_line(f'Total score: {score}')
 
         if player.score >= self.score_to_win:
             return True
@@ -98,7 +98,7 @@ class Game:
             # TODO probably best to extract the logic so I can test it in test_game.py  
             while True:
                 print_with_separating_line()
-                print_with_separating_line(f"Deal. {self.crib_player.name}'s crib.")
+                print_with_separating_line(f"New deal. {self.crib_player.name}'s crib.")
 
                 self.deck = cards.Deck()
                 random.shuffle(self.deck)
@@ -124,10 +124,11 @@ class Game:
                 self.update_player_score(self.crib_player, print_output=True)
                 self.update_player_score(self.crib_player, crib=True, print_output=True)
 
-                print_with_separating_line(self.status())
+                print_with_separating_line(self.status(), line_before=True)
 
                 self.swap_crib_player()
         except WinningScoreException as e:
+            print_with_separating_line('GAME OVER', line_before=True, line_after=False)
             print_with_separating_line(self.status())
 
     def do_play_loop(self):
@@ -143,6 +144,7 @@ class Game:
             self.player_one.said_go, self.player_two.said_go = False, False
             used_player_cards += used_player_cards + curr_play_cards
             curr_play_cards = []
+            print('Count is now at zero')
 
             while True: 
                 # inner loop for particular 0-31 iteration, exits via break so while True
@@ -156,8 +158,9 @@ class Game:
                     else: # got to 31
                         last_play_score = 2 
                     
+                    print(f'{curr_play_player.name} played the last card for a total of {played_card_total_value}, scoring {last_play_score}')
                     curr_play_player.score += last_play_score
-                    print(f'{curr_play_player.name} played the last card for a total of {played_card_total_value}, scoring {last_play_score}.')
+                    print_with_separating_line(self.status(), line_before=True)
                     curr_play_player = self._get_other_player(curr_play_player) # set curr player to opposite of player that last played a card (hopefully this is always the same as the player who first said go?)
                     break
                 else:
@@ -169,12 +172,13 @@ class Game:
         curr_play_card = player.get_play_card(curr_play_cards, all_play_cards)
         
         if curr_play_card:
-            print(f'{player.name} played {curr_play_card}')
             curr_play_cards.append(curr_play_card) # curr_play_cards is passed by ref, so this appends to the master list, as desired
+            curr_play_total = cards.Hand.get_value_total(curr_play_cards) 
+            print(f'{player.name} played {curr_play_card} for {curr_play_total}')
             score_from_card = cards.Hand(curr_play_cards).score_pegging()
             player.score += score_from_card
             if score_from_card > 0:
-                print(f'{player.name} scored {score_from_card}')
+                print(f'{player.name} scored {score_from_card}, now at {player.score}')
         else:
             # got None, which is a go (or no cards at all in hand, currently also None/go - I could update to return diff values if needed)
             print(f'{player.name} said go (or had no cards at all to play)')
@@ -208,21 +212,25 @@ class Player:
 
     def status(self):
         crib_status = ' (crib)' if self.crib else ''
-        return f'{self.name}: {self.score:3d}, hand: {self.hand}{crib_status}'
+        return f'{self.name.ljust(8)}: {self.score:3d}, hand: {self.hand}{crib_status}'
 
     def get_crib_cards(self):
         """
         Called by external code, like Game - does validation and removal from hand, defers choosing which cards 
         to get_candidate_crib_cards, which subclasses can override. Returns a list of two Card instances.
         """
-        crib_cards = self.get_candidate_crib_cards()
-        print_with_separating_line(f'Specs for crib cards: {crib_cards}')
+        # keep trying until we get a card that's in the remaining cards AND that's a value that'll fit into 31
+        while True:
+            crib_cards = self.get_candidate_crib_cards()
+            print(f'Selected crib cards: {crib_cards}')
 
-        for crib_card in crib_cards:
-            try:
-                self.hand.remove(crib_card)
-            except ValueError:
-                raise ValueError(f'At least one specified card not found in hand: {crib_cards} not in {self.hand}.')
+            if not all([c in self.hand for c in crib_cards]):
+                # one or more specified cards aren't in the hand - print message and loop
+                print(f'{self.name} specified at least one card not in hand: {crib_cards} not in {self.hand}')
+            else:
+                for card in crib_cards:
+                    self.hand.remove(card)
+                break
 
         return crib_cards
 
@@ -236,24 +244,32 @@ class Player:
         and removal from cards for the play and defers choosing the exact card to get_candidate_play_card, which subclasses
         can override.
         """        
+        curr_play_total = cards.Hand.get_value_total(curr_play_cards)
+        max_value_of_ok_card = 31 - curr_play_total
+
         if len(self.remaining_cards_for_the_play) == 0:
             candidate_play_card = None
             msg = 'has no cards'
-        elif (cards.Hand.get_value_total(curr_play_cards) + min([c.value for c in self.hand])) > 31:
+        elif (curr_play_total + min([c.value for c in self.remaining_cards_for_the_play])) > 31:
             # smallest card would still make the total > 31, so say go
             candidate_play_card = None
             msg = 'says go'
         else: 
-            candidate_play_card = self.get_candidate_play_card(curr_play_cards, all_play_cards)
-            msg = f'plays {candidate_play_card}'
+            # keep trying until we get a card that's in the remaining cards AND that's a value that'll fit into 31
+            while True: 
+                candidate_play_card = self.get_candidate_play_card(curr_play_cards, all_play_cards)
 
-            try:
-                self.remaining_cards_for_the_play.remove(candidate_play_card)
-            except ValueError:
-                raise ValueError(f'Specified play card {candidate_play_card} not found in {self.remaining_cards_for_the_play}.')
+                if not candidate_play_card in self.remaining_cards_for_the_play:
+                    print(f"{self.name} specified a card, {candidate_play_card}, that's not in the remaining eligible cards: {self.remaining_cards_for_the_play}")
+                elif candidate_play_card.value > max_value_of_ok_card:
+                    print(f"{self.name} specified a card, {candidate_play_card}, that would add to more than 31 (current total: {curr_play_total})")
+                else:
+                    self.remaining_cards_for_the_play.remove(candidate_play_card)
+                    msg = f'selects {candidate_play_card} for the play'
+                    break
 
-
-        print(f'{self.name} {msg}')
+        # more info than needed for general play, but keep as comment for possible debugging
+        #print(f'{self.name} {msg}')
         return candidate_play_card
 
     def get_candidate_play_card(self, curr_play_cards, all_play_cards):
@@ -263,14 +279,14 @@ class Player:
 
     def reset_eligible_play_cards(self):
         # whatever's in the hand we call an eligible play card
-        self.remaining_cards_for_the_play = self.hand
+        self.remaining_cards_for_the_play = self.hand.copy()
 
 class UIPlayer(Player):
     # ask someone, like a real person, potentially via UI (whatever's defined in the input_func, which defaults to 'input')
     def get_candidate_crib_cards(self):
         # TODO move status print to get_crib_cards as it's the same in both subclasses?
         print(self.status())
-        crib_card_specs_as_str = self.input_func('Enter crib cards, comma separated:')
+        crib_card_specs_as_str = self.input_func('Enter crib cards, comma separated: ')
         crib_card_specs = [s.strip() for s in crib_card_specs_as_str.split(',')] # split on comma, strip whitespace
         crib_cards = [cards.Card.from_spec(crib_card_specs[0]), cards.Card.from_spec(crib_card_specs[1])]
         return crib_cards
@@ -278,7 +294,7 @@ class UIPlayer(Player):
     def get_candidate_play_card(self, curr_play_cards, all_play_cards):
         # TODO add status print for play info - likely curr, all, and eligible?
         # TODO move/implement that the status print in get_play_card so only have to implement it once?
-        play_card_spec_as_str = self.input_func('Enter play card:')
+        play_card_spec_as_str = self.input_func(f'Enter play card (available: {self.remaining_cards_for_the_play}): ')
         return cards.Card.from_spec(play_card_spec_as_str)
 
 class RandomPlayer(Player):
@@ -292,7 +308,7 @@ class RandomPlayer(Player):
 
 
 if __name__ == '__main__':
-#    g = Game(UIPlayer('Player 1', crib=True), UIPlayer('Player 2'))
-#    g = Game(UIPlayer('Player 1', crib=True), RandomPlayer('Random Player'))
-    g = Game(RandomPlayer('Random 1'), RandomPlayer('Random 2'))
+    #g = Game(UIPlayer('Player 1', crib=True), UIPlayer('Player 2'))
+    #g = Game(UIPlayer('Andrew', crib=True), RandomPlayer('Random'))
+    g = Game(RandomPlayer('Alice'), RandomPlayer('Bob'))
     g.play()

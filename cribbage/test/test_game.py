@@ -158,11 +158,12 @@ class TestPlayer:
         assert crib_cards[0] == cards.Card.from_spec('3S')
         assert crib_cards[1] == cards.Card.from_spec('5S')
 
-    def test_player_get_crib_cards_fails_when_at_least_one_card_doesnt_exist_in_hand(self):
-        sut = game.UIPlayer(input_func = lambda x: 'JS,4S')
-        sut.hand = cards.Deck().draw_hand(6)
-        with pytest.raises(ValueError):
-            no_crib_cards = sut.get_crib_cards()
+    # we now ask repeatedly until we get a card that does exist
+    # def test_player_get_crib_cards_fails_when_at_least_one_card_doesnt_exist_in_hand(self):
+    #     sut = game.UIPlayer(input_func = lambda x: 'JS,4S')
+    #     sut.hand = cards.Deck().draw_hand(6)
+    #     with pytest.raises(ValueError):
+    #         no_crib_cards = sut.get_crib_cards()
 
     def test_player_get_crib_cards_removes_crib_cards_from_hand(self):
         sut = game.UIPlayer(input_func = lambda x: '3S,AS')
@@ -207,12 +208,15 @@ class TestPlayer:
         assert play_card == cards.Card.from_spec('2S')
         assert len(sut.remaining_cards_for_the_play) == 3
 
-    def test_player_get_play_card_fails_when_card_doesnt_exist_in_eligible_cards(self):
-        sut = game.UIPlayer(input_func = lambda x: 'KS')
-        sut.hand = cards.Deck().draw_hand(4)
-        sut.reset_eligible_play_cards()
-        with pytest.raises(ValueError):
-            no_play_card = sut.get_play_card([], [])
+    # no longer need this test because we now keep asking forever if someone specifies a non-existent card
+    # this hung VS Code, but running 'pytest --full-trace' from a cmd prompt let me kill pytest with a ctrl-c
+    # and get a stack trace that showed exactly what test was causing the problem
+    # def test_player_get_play_card_fails_when_card_doesnt_exist_in_eligible_cards(self):
+    #     sut = game.UIPlayer(input_func = lambda x: 'KS')
+    #     sut.hand = cards.Deck().draw_hand(4)
+    #     sut.reset_eligible_play_cards()
+    #     with pytest.raises(ValueError):
+    #         no_play_card = sut.get_play_card([], [])
     
     def test_player_get_play_card_says_go_with_no_eligible_cards(self):
         sut = game.Player()
@@ -227,3 +231,15 @@ class TestPlayer:
         sut.reset_eligible_play_cards()
         play_card = sut.get_play_card(cards.Hand.from_specs(['KC','KS','5D']), [])
         assert play_card is None
+
+    def test_player_get_play_wont_select_card_that_exceeds_31(self):
+        sut = game.RandomPlayer()
+        sut.hand = cards.Hand.from_specs(['AS','KS'])
+        sut.reset_eligible_play_cards()
+        play_card = sut.get_play_card(cards.Hand.from_specs(['KD','KC','KH']), []) # so count is 30 - Ace is ok, but nothing else
+        assert play_card == cards.Card.from_spec('AS')
+        # to test I use a RandomPlayer with two cards in the hand: one that's ok and one that's not
+        # it may take a few random choices before it'll get the one that's ok; the fact that this test
+        # is then non-deterministic means that on average it'll pass ~50% of the time even if there's no
+        # check for invalid choices... not sure how to get around this (one answer is to test other parts
+        # of the call chain, and I am already doing that)

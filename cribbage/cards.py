@@ -52,6 +52,11 @@ class Hand:
         # key is the index position in the hand, value is the Card instance
         self._cards[key] = value
 
+    def __str__(self):
+        return ', '.join([str(c) for c in self._cards])
+        #return f'{self._cards}'
+        #return str(self._cards)
+
     def __repr__(self):
         return repr(self._cards) # just print the representation of the internal array
 
@@ -79,16 +84,15 @@ class Hand:
     @staticmethod
     def _print_scoring(desc, score):
         if score > 0:
-            print(f'{desc} score(s) {score}.') 
+            print(f'- {desc} score(s) {score}.') 
         return score
 
     def score_pegging(self):
         points = 0
 
-        points += Hand._score_15(self._cards)
-        points += Hand._score_31(self._cards)
-        points += Hand._score_pegging_pairs(self._cards)
-        points += Hand._score_pegging_straights(self._cards)
+        points += Hand._print_scoring('Fifteen', Hand._score_15(self._cards))
+        points += Hand._print_scoring('Pair(s)', Hand._score_pegging_pairs(self._cards))
+        points += Hand._print_scoring('Straight', Hand._score_pegging_straights(self._cards))
 
         return points
 
@@ -114,9 +118,10 @@ class Hand:
     def _score_15(cards):
         return 2 if Hand.get_value_total(cards) == 15 else 0
 
-    @staticmethod
-    def _score_31(cards):
-        return 1 if Hand.get_value_total(cards) == 31 else 0
+    # no longer need, because end of play iteration scoring (2 for 31, 1 otherwise) is handled by the play loop
+    # @staticmethod
+    # def _score_31(cards):
+    #     return 1 if Hand.get_value_total(cards) == 31 else 0
 
     @staticmethod
     def _score_pair(cards):
