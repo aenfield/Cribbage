@@ -266,11 +266,12 @@ class TestHand:
     def test_pegging_doesnt_score_unordered_run_at_beginning(self):
         assert cards.Hand.from_specs(['6D','5S','7H','AD']).score_pegging() == 0
 
-    def test_pegging_scores_one_for_31(self):
-        assert cards.Hand.from_specs(['6D','5S','7H','4H','4D','5H']).score_pegging() == 1
+    # pegging score doesn't score the 1/2 for last card, now - instead that's handled by the play loop
+    # def test_pegging_scores_one_for_31(self):
+    #     assert cards.Hand.from_specs(['6D','5S','7H','4H','4D','5H']).score_pegging() == 1
 
-    def test_pegging_scores_one_for_31_and_three_for_run(self):
-        assert cards.Hand.from_specs(['6D','5S','5H','5D','4D','6S']).score_pegging() == 4
+    # def test_pegging_scores_one_for_31_and_three_for_run(self):
+    #     assert cards.Hand.from_specs(['6D','5S','5H','5D','4D','6S']).score_pegging() == 4
 
 
 class TestCard:
